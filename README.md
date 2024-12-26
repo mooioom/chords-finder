@@ -1,6 +1,6 @@
 # 🎵 Chords Finder
 
-A web application that analyzes MP3 files and detects the chord progression in real-time! 🎸
+A web application that analyzes MP3 files and detects the chord progression (ffmpeg, madmom, flask)! 🎸
 
 ## ✨ Features
 
@@ -87,4 +87,7 @@ If you encounter any issues:
 1. Make sure Docker is running and has enough resources allocated
 2. For audio processing issues, ensure ffmpeg is properly installed in the container
 3. If the analysis takes too long, try with a smaller file first
-4. Check the browser console for any JavaScript errors 
+4. Check the browser console for any JavaScript errors
+
+Created by Eldad Levi using Cursor-AI (anthropic)
+Licened MIT fork it, upgrade and give some music to the world 🎸
