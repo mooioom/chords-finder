@@ -21,7 +21,7 @@ A web application that analyzes MP3 files and detects the chord progression (ffm
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/chords-finder.git
+git clone https://github.com/mooioom/chords-finder.git
 cd chords-finder
 ```
 
