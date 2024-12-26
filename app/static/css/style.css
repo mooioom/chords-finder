@@ -121,11 +121,65 @@ main{
     font-weight: 600;
     min-width: 80px;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(5px);
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     letter-spacing: -0.5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.chord-marker:hover {
+    background: rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px) scale(1.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.chord-marker:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.chord-marker.active {
+    background: rgba(0, 123, 255, 0.3);
+    transform: scale(1.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    animation: markerPulse 2s infinite;
+    color: #fff;
+    text-shadow: 
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 123, 255, 0.4),
+        inset 0 0 20px rgba(0, 123, 255, 0.2);
+    z-index: 10;
+}
+
+@keyframes markerPulse {
+    0% {
+        box-shadow: 
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            0 0 30px rgba(0, 123, 255, 0.4),
+            inset 0 0 20px rgba(0, 123, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+    50% {
+        box-shadow: 
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            0 0 50px rgba(0, 123, 255, 0.6),
+            inset 0 0 30px rgba(0, 123, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        box-shadow: 
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            0 0 30px rgba(0, 123, 255, 0.4),
+            inset 0 0 20px rgba(0, 123, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
 }
 
 .chord-marker .time-indicator {
@@ -133,14 +187,6 @@ main{
     opacity: 0.6;
     display: block;
     margin-top: 4px;
-}
-
-.chord-marker.active {
-    background: rgba(0, 123, 255, 0.2);
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    animation: pulse 2s infinite;
-    color: yelow;
 }
 
 .current-chord-box {
@@ -335,6 +381,7 @@ wave::-webkit-scrollbar-thumb:hover {
     border-radius: 20px;
     backdrop-filter: blur(10px);
     text-align: center;
+    margin-top: 120px;
 }
 
 .upload-area {
@@ -419,8 +466,6 @@ wave::-webkit-scrollbar-thumb:hover {
 }
 
 footer {
-    margin-top: 60px;
-    padding: 20px 0;
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
     position: fixed;
@@ -529,4 +574,46 @@ footer {
     33% { border-bottom-right-radius: 60%; }
     66% { border-bottom-right-radius: 30%; }
     100% { border-bottom-right-radius: 40%; }
+}
+
+.file-info-display {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.file-name {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scale-info {
+    color: rgba(0, 123, 255, 0.9);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.floating-note {
+    position: fixed;
+    pointer-events: none;
+    will-change: transform, opacity;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    filter: drop-shadow(0 0 5px rgba(0, 123, 255, 0.2));
 } 

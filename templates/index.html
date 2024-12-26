@@ -66,7 +66,7 @@
     <!-- Footer -->
     <footer class="mt-5">
         <div class="footer-content">
-            <p>Created by Eldad Levi | Bring Them Home 🕊️</p>
+            <p>By <a href="https://www.linkedin.com/in/eldad-eliyahu-levi/" class="text-white text-decoration-none">Eldad Levi</a> | <span class="text-footer">Bring Them Home.</span> 🎗️</p>
         </div>
     </footer>
 </div>
@@ -189,10 +189,12 @@ document.addEventListener('DOMContentLoaded', function() {
             wavesurfer.pause();
             playBtn.innerHTML = '<i class="fas fa-play"></i>';
             currentChordBox.classList.remove('playing');
+            stopGeneratingNotes();
         } else {
             wavesurfer.play();
             playBtn.innerHTML = '<i class="fas fa-pause"></i>';
             currentChordBox.classList.add('playing');
+            startGeneratingNotes();
         }
     });
 
@@ -304,6 +306,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Add after existing variables
+    const TRANSITION_DURATION = 300; // matches CSS transition duration in ms
+
     function updateCurrentChord(currentTime) {
         const currentChord = findCurrentChord(currentTime);
         if (!currentChord) return;
@@ -312,6 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentTime >= chord.startTime && currentTime < chord.endTime
         );
 
+        // Update current chord if it changed
         if (currentIndex !== lastChordIndex) {
             // Update the current chord display
             let displayChord = `${currentChord.root}${formatChordType(currentChord.type)}`;
@@ -327,6 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 element.classList.add('active');
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            
             lastChordIndex = currentIndex;
         } else {
             // Just update the time
@@ -346,15 +353,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    let currentFileName = '';
+
     function displayResults(chords, file) {
-        // Load and display waveform
+        // Remove previous file info display if exists
+        const existingFileInfo = document.querySelector('.file-info-display');
+        if (existingFileInfo) {
+            existingFileInfo.remove();
+        }
+
+        // Update file info
+        currentFileName = file.name;
+        const fileInfoDisplay = document.createElement('div');
+        fileInfoDisplay.className = 'file-info-display';
+        document.querySelector('.main-title').after(fileInfoDisplay);
+        
+        // Add with opacity 0 first
+        fileInfoDisplay.style.opacity = '0';
+        fileInfoDisplay.innerHTML = `
+            <span class="file-name">${currentFileName}</span>
+        `;
+        
+        // Trigger reflow and animate in
+        requestAnimationFrame(() => {
+            fileInfoDisplay.style.opacity = '1';
+        });
+
+        // Reset wavesurfer and load new file
+        wavesurfer.stop();
         wavesurfer.loadBlob(file);
+        
+        // Reset play button state
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
         
         // Display chord sequence
         const timeline = document.querySelector('.chord-timeline');
         timeline.innerHTML = '';
         
-        chords.forEach(item => {
+        chords.forEach((item, index) => {
             const marker = document.createElement('div');
             marker.className = 'chord-marker';
             let displayChord = `${item.root}${formatChordType(item.type)}`;
@@ -363,13 +399,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${displayChord}
                 <span class="time-indicator">${formatTime(item.startTime)}</span>
             `;
+            
+            marker.addEventListener('click', () => {
+                wavesurfer.play(item.startTime);
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                currentChordBox.classList.add('playing');
+                clearActiveChords();
+                marker.classList.add('active');
+            });
+            
             timeline.appendChild(marker);
         });
         
+        // Reset states
         resultsContainer.classList.remove('d-none');
         currentChordValue.textContent = '';
         currentTimeValue.textContent = '';
         currentChordBox.classList.remove('playing');
+        currentChordBox.style.transform = 'scale(1)';
+        currentChordBox.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2)';
+        
+        // Reset last chord index
+        lastChordIndex = -1;
     }
 
     const uploadArea = document.querySelector('.upload-area');
@@ -433,6 +484,113 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadArea.classList.remove('error');
         uploadArea.classList.add('success');
         analyzeBtn.disabled = false;
+    }
+
+    // Add after the existing variables
+    const musicEmojis = ['🎵', '🎶', '♪', '♫'];
+    const floatingNotes = new Set();
+    let isGeneratingNotes = false;
+    let animationFrameId = null;
+
+    function createFloatingNote() {
+        const note = document.createElement('div');
+        note.className = 'floating-note';
+        note.textContent = musicEmojis[Math.floor(Math.random() * musicEmojis.length)];
+        
+        // Random starting position at bottom
+        const startX = Math.random() * (window.innerWidth - 40);
+        const startY = window.innerHeight - Math.random() * 20;
+        
+        // Random properties for animation
+        const speed = 0.8 + Math.random() * 0.4; // Speed multiplier
+        const sway = 30 + Math.random() * 40; // Max sway distance in pixels
+        const swaySpeed = 1 + Math.random() * 2; // Sway speed multiplier
+        const rotationRange = 15 + Math.random() * 25; // Max rotation in degrees
+        const scaleRange = 0.3 + Math.random() * 0.4; // Scale variation
+        
+        note.style.cssText = `
+            position: fixed;
+            left: ${startX}px;
+            top: ${startY}px;
+            font-size: 24px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.5s ease;
+        `;
+        
+        document.body.appendChild(note);
+        requestAnimationFrame(() => note.style.opacity = '0.7');
+        
+        let time = 0;
+        let initialY = startY;
+        let lifeTime = 0;
+        const maxLifeTime = 10; // 10 seconds lifetime
+        
+        function updatePosition() {
+            if (!document.body.contains(note)) return;
+            
+            time += 0.016; // Approximately 60fps
+            lifeTime += 0.016;
+            
+            // Start fading out at 9 seconds (1 second fade)
+            if (lifeTime >= maxLifeTime - 1) {
+                const fadeProgress = (maxLifeTime - lifeTime);
+                note.style.opacity = Math.max(0, fadeProgress * 0.7);
+                
+                if (lifeTime >= maxLifeTime) {
+                    note.remove();
+                    floatingNotes.delete(note);
+                    return;
+                }
+            }
+            
+            // Vertical movement (float up)
+            const newY = initialY - (time * 50 * speed);
+            
+            // Horizontal sway
+            const swayX = Math.sin(time * swaySpeed) * sway;
+            
+            // Rotation
+            const rotation = Math.sin(time * swaySpeed * 1.2) * rotationRange;
+            
+            // Scale oscillation
+            const scale = 1 + Math.sin(time * swaySpeed * 0.8) * scaleRange;
+            
+            note.style.transform = `
+                translate(${swayX}px, ${newY - initialY}px)
+                rotate(${rotation}deg)
+                scale(${scale})
+            `;
+            
+            requestAnimationFrame(updatePosition);
+        }
+        
+        floatingNotes.add(note);
+        requestAnimationFrame(updatePosition);
+    }
+
+    function startGeneratingNotes() {
+        if (isGeneratingNotes) return;
+        isGeneratingNotes = true;
+        
+        function generateNote() {
+            if (!isGeneratingNotes) return;
+            createFloatingNote();
+            setTimeout(generateNote, 800 + Math.random() * 1200); // Random interval between notes
+        }
+        
+        generateNote();
+    }
+
+    function stopGeneratingNotes() {
+        isGeneratingNotes = false;
+        
+        // Fade out existing notes
+        floatingNotes.forEach(note => {
+            note.style.transition = 'opacity 2s ease';
+            note.style.opacity = '0';
+            setTimeout(() => note.remove(), 2000);
+        });
     }
 });
 </script>
