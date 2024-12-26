@@ -1,0 +1,53 @@
+/* General styles */
+body {
+    background-color: #f8f9fa;
+}
+
+/* Card styles */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-title {
+    color: #2c3e50;
+}
+
+/* Upload form styles */
+#file-upload {
+    border-color: #dee2e6;
+}
+
+#file-upload:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Progress bar styles */
+.progress {
+    height: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Results container styles */
+#waveform {
+    background: #fff;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.chord-timeline {
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-md-8 {
+        padding: 0 15px;
+    }
+    
+    .card {
+        border-radius: 0;
+    }
+} 

@@ -1,0 +1,35 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+# Install system dependencies required for Madmom and Librosa
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libsndfile1 \
+    python3-dev \
+    gcc \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Cython and numpy first
+COPY requirements.txt .
+RUN pip install --no-cache-dir Cython==0.29.36
+RUN pip install --no-cache-dir numpy==1.20.3
+
+# Install remaining requirements
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create necessary directories
+RUN mkdir -p app/static/uploads app/static/css app/static/js templates
+
+# Copy application code
+COPY app app/
+COPY templates templates/
+COPY tests tests/
+COPY run.py config.py ./
+
+# Set permissions
+RUN chmod -R 777 /app
+
+# Run tests
+CMD ["pytest", "-v", "--cov=app", "tests/"] 

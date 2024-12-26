@@ -1,0 +1,158 @@
+CHORDS FINDER APPLICATION DESCRIPTION
+
+1. Overview
+-----------
+Chords Finder is a web application that analyzes MP3 files to detect and display chord progressions along with audio visualization. The application provides an intuitive interface for musicians and music enthusiasts to understand the harmonic structure of their music.
+
+2. Technical Stack
+-----------------
+Backend:
+- Flask (Python web framework)
+- Madmom (Music signal processing library for chord detection)
+- Librosa (Audio processing support)
+
+Frontend:
+- HTML5/CSS3
+- JavaScript
+- Wavesurfer.js (Audio waveform visualization)
+- Bootstrap (Responsive design framework)
+
+3. Project Structure
+-------------------
+chords-finder/
+├── app/
+│   ├── __init__.py          # Flask application initialization
+│   ├── routes.py            # URL route handlers
+│   ├── audio_processor.py   # Madmom integration and audio processing logic
+│   └── static/
+│       ├── css/             # Stylesheets
+│       ├── js/              # Frontend JavaScript
+│       └── uploads/         # Temporary file storage
+├── templates/
+│   ├── base.html           # Base template
+│   └── index.html          # Main application page
+├── tests/                  # Test directory
+│   ├── __init__.py
+│   ├── test_routes.py
+│   └── test_audio_processor.py
+├── requirements.txt        # Python dependencies
+├── requirements-test.txt   # Test-specific dependencies
+├── config.py              # Configuration settings
+├── run.py                 # Application entry point
+├── Dockerfile             # Application container definition
+├── Dockerfile.test        # Test container definition
+└── docker-compose.yml     # Multi-container orchestration
+
+4. Core Features
+---------------
+a. File Upload:
+   - Support for MP3 file format
+   - File size validation
+   - Secure file handling
+   - Temporary storage management
+
+b. Audio Analysis:
+   - Chord detection using Madmom's deep learning models
+   - Extraction of chord progression
+   - Timing information for each chord change
+   - Basic error handling for corrupted files
+
+c. Visualization:
+   - Interactive waveform display
+   - Chord progression overlay on waveform
+   - Time-synchronized chord display
+   - Visual feedback during processing
+
+d. User Interface:
+   - Clean, minimal design
+   - Drag-and-drop file upload
+   - Progress indication during analysis
+   - Clear results display
+   - Responsive layout for different screen sizes
+
+5. Processing Flow
+-----------------
+1. User Input:
+   - User uploads MP3 file through web interface
+   - Frontend validates file format and size
+
+2. Backend Processing:
+   - File is securely saved to temporary storage
+   - Madmom processes audio file for chord detection
+   - Audio data is analyzed for waveform generation
+   - Results are formatted for frontend display
+
+3. Results Display:
+   - Waveform visualization is rendered
+   - Chord progression is displayed above waveform
+   - Timing information is synchronized
+   - User can interact with the visualization
+
+6. Security Considerations
+-------------------------
+- Secure file upload handling
+- Temporary file cleanup
+- Input validation
+- Maximum file size limits
+- Allowed file type restrictions
+
+7. Future Enhancements
+----------------------
+- Support for additional audio formats (WAV, FLAC)
+- Chord playback functionality
+- Export results as PDF/MIDI
+- User accounts for saving analyses
+- Batch processing capability
+- Advanced audio analysis features
+
+8. Dependencies
+--------------
+Python Packages:
+- Flask>=2.0.0
+- madmom>=0.16.1
+- librosa>=0.9.0
+- numpy>=1.20.0
+- werkzeug>=2.0.0
+
+Frontend Libraries:
+- wavesurfer.js>=6.0.0
+- bootstrap>=5.0.0
+- jquery>=3.6.0
+
+9. Development Setup
+-------------------
+1. Python 3.8+ required
+2. Virtual environment recommended
+3. Install dependencies from requirements.txt
+4. Configure environment variables
+5. Run Flask development server
+
+Docker Setup
+-----------
+1. Container Architecture:
+   - App Container: Main application service
+     - Based on Python 3.8-slim
+     - Runs Flask application
+     - Exposes port 5000
+   - Test Container: Testing environment
+     - Separate container for running tests
+     - Isolated testing environment
+     - Runs pytest suite
+
+2. Development Workflow:
+   - Build and run: docker-compose up
+   - Run tests: docker-compose run test
+   - Clean up: docker-compose down
+
+3. Container Configuration:
+   - Environment variables managed via docker-compose.yml
+   - Volume mapping for code changes
+   - Separate build contexts for app and test containers
+
+10. Testing Strategy
+-------------------
+- Unit tests for audio processing functions
+- Integration tests for API endpoints
+- Frontend component testing
+- End-to-end testing of complete workflow
+- Performance testing for large audio files

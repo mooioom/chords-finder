@@ -1,0 +1,92 @@
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* Header */
+h1 {
+    color: #333;
+    font-weight: bold;
+}
+
+/* Upload Section */
+.upload-section {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.upload-section p {
+    color: #666;
+}
+
+/* Chord Display */
+.chord-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.chord-marker {
+    background: #e6f3ff;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 1.2em;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.chord-marker:hover {
+    transform: translateY(-2px);
+}
+
+/* Results Section */
+.result-box {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 4px;
+    margin-top: 20px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#waveform {
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Loader */
+#loader {
+    margin: 40px 0;
+}
+
+/* Buttons */
+.btn-primary {
+    min-width: 120px;
+    background-color: #007bff;
+    border: none;
+    padding: 8px 20px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* Form Controls */
+.form-control {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+} 
