@@ -616,4 +616,91 @@ footer {
     will-change: transform, opacity;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     filter: drop-shadow(0 0 5px rgba(0, 123, 255, 0.2));
+}
+
+.transpose-controls {
+    position: absolute;
+    top: 50%;
+    width: calc(100% + 80px);
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    pointer-events: none;
+    z-index: 10;
+    left: -40px;
+}
+
+.transpose-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+}
+
+.transpose-btn:hover {
+    background: rgba(0, 123, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+}
+
+.transpose-btn:active {
+    transform: translateY(-50%) scale(0.95);
+    background: rgba(0, 123, 255, 0.4);
+}
+
+.transpose-btn i {
+    font-size: 1em;
+}
+
+.transpose-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 8px 16px;
+    color: white;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+}
+
+.transpose-indicator.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.transpose-indicator .reset-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.transpose-indicator .reset-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
 } 

@@ -44,6 +44,14 @@
         <!-- Current Chord Display -->
         <div id="current-chord-display" class="mb-4">
             <div class="current-chord-box">
+                <div class="transpose-controls">
+                    <button class="transpose-btn transpose-down">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="transpose-btn transpose-up">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
                 <div class="current-chord-value"></div>
                 <span class="current-time-value"></span>
             </div>
@@ -319,17 +327,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update current chord if it changed
         if (currentIndex !== lastChordIndex) {
-            // Update the current chord display
-            let displayChord = `${currentChord.root}${formatChordType(currentChord.type)}`;
-            if (displayChord === 'N') displayChord = '🎵';
-            currentChordValue.textContent = displayChord;
-            currentTimeValue.textContent = `(${formatTime(currentTime)})`;
-            
-            // Update highlighted chord in the sequence
-            clearActiveChords();
+            // Get the chord text from the active marker instead of generating it
             const chordElements = document.querySelectorAll('.chord-marker');
             if (currentIndex >= 0 && chordElements[currentIndex]) {
                 const element = chordElements[currentIndex];
+                const markerChordText = element.childNodes[0].textContent.trim();
+                currentChordValue.textContent = markerChordText;
+                currentTimeValue.textContent = `(${formatTime(currentTime)})`;
+                
+                // Update highlighted chord in the sequence
+                clearActiveChords();
                 element.classList.add('active');
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -356,6 +363,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFileName = '';
 
     function displayResults(chords, file) {
+        // Reset transposition when loading new file
+        currentTransposition = 0;
+        updateTransposeIndicator();
+        
         // Remove previous file info display if exists
         const existingFileInfo = document.querySelector('.file-info-display');
         if (existingFileInfo) {
@@ -411,8 +422,10 @@ document.addEventListener('DOMContentLoaded', function() {
             timeline.appendChild(marker);
         });
         
-        // Reset states
+        // Show results container first
         resultsContainer.classList.remove('d-none');
+        
+        // Reset states
         currentChordValue.textContent = '';
         currentTimeValue.textContent = '';
         currentChordBox.classList.remove('playing');
@@ -592,6 +605,108 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => note.remove(), 2000);
         });
     }
+
+    // Add after the existing variables
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    let currentTransposition = 0;
+
+    // Add the transposition indicator HTML
+    const transposeIndicator = document.createElement('div');
+    transposeIndicator.className = 'transpose-indicator';
+    transposeIndicator.innerHTML = `
+        <span class="transpose-text">Transposed: <strong>0</strong> semitones</span>
+        <button class="reset-btn">Reset</button>
+    `;
+    document.body.appendChild(transposeIndicator);
+
+    function updateTransposeIndicator() {
+        const indicator = document.querySelector('.transpose-indicator');
+        const transposeText = indicator.querySelector('strong');
+        
+        if (currentTransposition === 0) {
+            indicator.classList.remove('visible');
+        } else {
+            transposeText.textContent = currentTransposition;
+            indicator.classList.add('visible');
+        }
+    }
+
+    function setupTransposeButtons() {
+        const transposeDownBtn = document.querySelector('.transpose-down');
+        const transposeUpBtn = document.querySelector('.transpose-up');
+        const resetBtn = document.querySelector('.transpose-indicator .reset-btn');
+        
+        transposeDownBtn.addEventListener('click', () => transposeChords(-1));
+        transposeUpBtn.addEventListener('click', () => transposeChords(1));
+        resetBtn.addEventListener('click', resetTransposition);
+    }
+
+    function resetTransposition() {
+        if (currentTransposition === 0) return;
+        
+        const oldTransposition = currentTransposition;
+        currentTransposition = 0;
+        
+        // Transpose back by the negative of current transposition
+        updateAllChords(-oldTransposition);
+        updateTransposeIndicator();
+    }
+
+    function transposeChords(semitones) {
+        currentTransposition = (currentTransposition + semitones) % 12;
+        if (currentTransposition < 0) currentTransposition += 12;
+
+        updateAllChords(semitones);
+        updateTransposeIndicator();
+    }
+
+    function updateAllChords(semitones) {
+        try {
+            // Update all chord markers
+            document.querySelectorAll('.chord-marker').forEach(marker => {
+                const textNode = marker.childNodes[0];
+                const chordText = textNode.textContent.trim();
+                if (chordText && chordText !== '🎵') {
+                    const transposed = transposeChord(chordText, semitones);
+                    if (transposed) textNode.textContent = transposed;
+                }
+            });
+
+            // Update current chord display
+            const currentChord = currentChordValue.textContent;
+            if (currentChord && currentChord !== '🎵') {
+                const transposed = transposeChord(currentChord, semitones);
+                if (transposed) currentChordValue.textContent = transposed;
+            }
+        } catch (error) {
+            console.error('Transposition error:', error);
+        }
+    }
+
+    function transposeChord(chord, semitones) {
+        try {
+            // Extract root note and the rest of the chord
+            const match = chord.match(/^([A-G]#?)(.*)$/);
+            if (!match) return null;
+
+            const [_, root, quality] = match;
+            const noteIndex = notes.indexOf(root);
+            if (noteIndex === -1) return null;
+
+            // Calculate new root note
+            let newIndex = noteIndex + semitones;
+            // Ensure the index wraps around properly
+            newIndex = ((newIndex % 12) + 12) % 12;
+            
+            return notes[newIndex] + quality;
+        } catch (error) {
+            console.error('Error transposing chord:', chord, error);
+            return null;
+        }
+    }
+
+    // Call setup after DOM is loaded
+    setupTransposeButtons();
 });
 </script>
 {% endblock %} 
