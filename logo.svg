@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .text { font-family: 'Quicksand', sans-serif; fill: #fff; }
+        .icon { fill: none; stroke: #fff; stroke-width: 2; }
+    </style>
+    <g opacity="0.9">
+        <path class="icon" d="M20,25 Q30,15 40,25 T60,25" />
+        <circle class="icon" cx="20" cy="25" r="3" />
+        <circle class="icon" cx="40" cy="25" r="3" />
+        <circle class="icon" cx="60" cy="25" r="3" />
+        <text x="80" y="32" class="text" font-size="24">Chords Finder</text>
+    </g>
+</svg> 
