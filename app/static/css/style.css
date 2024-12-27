@@ -9,60 +9,48 @@
 
 body {
     background: 
-        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-        url('https://www.transparenttextures.com/patterns/dark-wood.png'),
-        url('https://assets.codepen.io/721952/smoke.png'),
-        linear-gradient(var(--rotation), #1a0f1f, #0f1a1f, #1f0f1a),
-        radial-gradient(circle at 50% 50%, #2a1f2f, #1f2a2f, #2f1f2a);
-    background-size: cover, 200px 200px, 1000px 1000px, 400% 400%, 200% 200%;
-    color: #fff;
+        linear-gradient(45deg, rgba(0,0,0,0.9), rgba(20,20,20,0.8)),
+        radial-gradient(circle at 50% 50%, rgba(30,30,30,0.8), rgba(0,0,0,0.9)),
+        linear-gradient(to right, #1a1a1a, #2a2a2a);
+    background-size: 200% 200%, 100% 100%, 100% 100%;
+    animation: gradientBG 15s ease infinite;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    color: white;
     font-family: 'Outfit', sans-serif;
     position: relative;
-    overflow: hidden;
-    transition: background-position 0.1s ease-out;
+    overflow-x: hidden;
 }
 
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 0%, center center, 0% 0%;
+    }
+    50% {
+        background-position: 100% 100%, center center, 100% 0%;
+    }
+    100% {
+        background-position: 0% 0%, center center, 0% 0%;
+    }
+}
+
+/* Add a subtle overlay effect */
 body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     background: 
-        radial-gradient(circle at 30% 30%, rgba(45, 20, 60, var(--glow-opacity)) 0%, transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(20, 45, 60, var(--glow-opacity)) 0%, transparent 60%);
-    mix-blend-mode: overlay;
+        radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+        rgba(40,40,40,0.3) 0%, 
+        rgba(0,0,0,0.5) 100%);
     pointer-events: none;
-    transform: scale(var(--scale));
-    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
-}
-
-@keyframes gradientBG {
-    0% {
-        background-position: 
-            0 0,
-            0 0,
-            var(--smoke-offset) var(--smoke-offset),
-            0% 50%,
-            100% 100%;
-    }
-    50% {
-        background-position: 
-            0 0,
-            0 0,
-            calc(var(--smoke-offset) - 30%) calc(var(--smoke-offset) - 30%),
-            100% 50%,
-            0% 0%;
-    }
-    100% {
-        background-position: 
-            0 0,
-            0 0,
-            var(--smoke-offset) var(--smoke-offset),
-            0% 50%,
-            100% 100%;
-    }
+    opacity: var(--glow-opacity, 0.4);
+    transition: opacity 0.3s ease;
+    z-index: -1;
 }
 
 @keyframes glowPulse {
@@ -104,7 +92,7 @@ main{
     gap: 15px;
     justify-content: center;
     margin-bottom: 20px;
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
     padding: 20px;
     background: rgba(255, 255, 255, 0.05);
@@ -113,27 +101,56 @@ main{
 }
 
 .chord-marker {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.2);
     color: #fff;
     padding: 12px 25px;
     border-radius: 25px;
     font-size: 1.3em;
     font-weight: 600;
     min-width: 80px;
+    max-width: 200px;
     text-align: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(5px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     letter-spacing: -0.5px;
     cursor: pointer;
     user-select: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: markerColorFlow 10s linear infinite;
+    width: var(--chord-width, 80px);
+}
+
+@keyframes markerColorFlow {
+    0% {
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    20% {
+        background: rgba(255, 87, 51, 0.15);
+        box-shadow: 0 4px 6px rgba(255, 87, 51, 0.2);
+    }
+    40% {
+        background: rgba(255, 195, 0, 0.15);
+        box-shadow: 0 4px 6px rgba(255, 195, 0, 0.2);
+    }
+    60% {
+        background: rgba(0, 255, 127, 0.15);
+        box-shadow: 0 4px 6px rgba(0, 255, 127, 0.2);
+    }
+    80% {
+        background: rgba(147, 51, 255, 0.15);
+        box-shadow: 0 4px 6px rgba(147, 51, 255, 0.2);
+    }
+    100% {
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
 }
 
 .chord-marker:hover {
-    background: rgba(0, 123, 255, 0.1);
     transform: translateY(-2px) scale(1.05);
-    border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
@@ -246,17 +263,29 @@ main{
         bottomLeftRadius 9s ease-in-out infinite,
         bottomRightRadius 6s ease-in-out infinite,
         skew3D 10s ease-in-out infinite,
-        playingBorderGlow 2s infinite;
+        borderGlow 10s linear infinite;
 }
 
-@keyframes playingBorderGlow {
+@keyframes borderGlow {
     0% {
         border-color: rgba(255, 255, 255, 0.2);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
-    50% {
-        border-color: rgba(0, 123, 255, 0.5);
-        box-shadow: 0 8px 32px rgba(0, 123, 255, 0.3);
+    20% {
+        border-color: rgba(255, 87, 51, 0.5);  /* Red-Orange */
+        box-shadow: 0 8px 32px rgba(255, 87, 51, 0.3);
+    }
+    40% {
+        border-color: rgba(255, 195, 0, 0.5);  /* Yellow */
+        box-shadow: 0 8px 32px rgba(255, 195, 0, 0.3);
+    }
+    60% {
+        border-color: rgba(0, 255, 127, 0.5);  /* Spring Green */
+        box-shadow: 0 8px 32px rgba(0, 255, 127, 0.3);
+    }
+    80% {
+        border-color: rgba(147, 51, 255, 0.5);  /* Purple */
+        box-shadow: 0 8px 32px rgba(147, 51, 255, 0.3);
     }
     100% {
         border-color: rgba(255, 255, 255, 0.2);
@@ -307,7 +336,7 @@ main{
 .result-box {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 25px;
+    padding: 15px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
     margin-top: 20px;
@@ -538,9 +567,21 @@ footer {
         border-color: rgba(255, 255, 255, 0.2);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
-    50% {
-        border-color: rgba(0, 123, 255, 0.5);
-        box-shadow: 0 8px 32px rgba(0, 123, 255, 0.3);
+    20% {
+        border-color: rgba(255, 87, 51, 0.5);  /* Red-Orange */
+        box-shadow: 0 8px 32px rgba(255, 87, 51, 0.3);
+    }
+    40% {
+        border-color: rgba(255, 195, 0, 0.5);  /* Yellow */
+        box-shadow: 0 8px 32px rgba(255, 195, 0, 0.3);
+    }
+    60% {
+        border-color: rgba(0, 255, 127, 0.5);  /* Spring Green */
+        box-shadow: 0 8px 32px rgba(0, 255, 127, 0.3);
+    }
+    80% {
+        border-color: rgba(147, 51, 255, 0.5);  /* Purple */
+        box-shadow: 0 8px 32px rgba(147, 51, 255, 0.3);
     }
     100% {
         border-color: rgba(255, 255, 255, 0.2);

@@ -15,7 +15,7 @@
                     <p class="upload-hint">Drag and drop or click to select</p>
                 </div>
             </div>
-            <button type="button" id="analyze-btn" class="btn btn-primary" disabled>
+            <button type="button" id="analyze-btn" class="btn btn-primary" style="display: none;" disabled>
                 <i class="fas fa-wand-magic-sparkles me-2"></i>Analyze
             </button>
         </div>
@@ -252,19 +252,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || 'Upload failed');
             }
             
-            // Parse and store chord sequence
-            chordSequence = data.chord_sequence.map(item => {
-                const chord = parseChordData(item.chord);
-                return {
-                    startTime: chord.startTime,
-                    endTime: chord.endTime,
-                    root: chord.root,
-                    type: chord.type
-                };
-            });
+            // Hide loader and show results
+            loader.classList.add('d-none');
+            resultsContainer.classList.remove('d-none');
             
-            // Display results
-            displayResults(chordSequence, file);
+            // Parse and display chord sequence
+            chordSequence = data.chord_sequence;
+            displayResults(data.chord_sequence, file);
             
         } catch (error) {
             errorMessage.textContent = error.message;
@@ -277,9 +271,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle "Upload More" button
     uploadMoreBtn.addEventListener('click', function() {
-        uploadSection.style.display = 'block';  // Show entire upload section
-        resultsContainer.classList.add('d-none');
+        // Reset file input
         fileInput.value = '';
+        analyzeBtn.style.display = 'none';
+        
+        // Reset upload area
+        uploadText.textContent = 'Drop your MP3 here or click to browse';
+        uploadHint.textContent = 'Drag and drop or click to select';
+        uploadArea.classList.remove('success', 'error');
+        
+        // Show upload section and hide results
+        uploadSection.style.display = 'block';
+        resultsContainer.classList.add('d-none');
+        errorMessage.classList.add('d-none');
+        
+        // Stop any playing audio
+        if (wavesurfer.isPlaying()) {
+            wavesurfer.stop();
+        }
+        
+        // Reset states
+        currentChordValue.textContent = '';
+        currentTimeValue.textContent = '';
+        lastChordIndex = -1;
+        currentChordBox.classList.remove('playing');
+        stopGeneratingNotes();
     });
 
     function formatTime(seconds) {
@@ -291,12 +307,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseChordData(chordStr) {
         const match = chordStr.match(/\(([\d.]+),\s*([\d.]+),\s*'([^']+)'\)/);
         if (match) {
-            const chordParts = match[3].split(':');
+            const [root, type] = match[3].split(':');
             return {
                 startTime: parseFloat(match[1]),
                 endTime: parseFloat(match[2]),
-                root: chordParts[0],
-                type: chordParts[1] || 'maj'
+                root: root,
+                type: type || 'maj'  // Default to major if no type specified
             };
         }
         return null;
@@ -310,6 +326,16 @@ document.addEventListener('DOMContentLoaded', function() {
             case '7': return '7';
             case 'maj7': return 'maj7';
             case 'min7': return 'm7';
+            case 'dim7': return '°7';
+            case 'hdim7': return 'ø7';  // half-diminished
+            case 'aug': return '+';
+            case 'sus4': return 'sus4';
+            case 'sus2': return 'sus2';
+            case '6': return '6';
+            case 'm6': return 'm6';
+            case '9': return '9';
+            case 'maj9': return 'maj9';
+            case 'm9': return 'm9';
             default: return type;
         }
     }
@@ -321,16 +347,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentChord = findCurrentChord(currentTime);
         if (!currentChord) return;
 
-        const currentIndex = chordSequence.findIndex(chord => 
-            currentTime >= chord.startTime && currentTime < chord.endTime
-        );
+        const currentIndex = chordSequence.findIndex(chord => {
+            const chordData = parseChordData(chord.chord);
+            return chordData && 
+                currentTime >= chordData.startTime && 
+                currentTime < chordData.endTime;
+        });
 
         // Update current chord if it changed
         if (currentIndex !== lastChordIndex) {
-            // Get the chord text from the active marker instead of generating it
             const chordElements = document.querySelectorAll('.chord-marker');
             if (currentIndex >= 0 && chordElements[currentIndex]) {
                 const element = chordElements[currentIndex];
+                
+                // Update text immediately
                 const markerChordText = element.childNodes[0].textContent.trim();
                 currentChordValue.textContent = markerChordText;
                 currentTimeValue.textContent = `(${formatTime(currentTime)})`;
@@ -338,7 +368,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update highlighted chord in the sequence
                 clearActiveChords();
                 element.classList.add('active');
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Scroll the active chord into view
+                const timeline = document.querySelector('.chord-timeline');
+                const elementTop = element.offsetTop;
+                const timelineHeight = timeline.clientHeight;
+                const scrollPosition = elementTop - (timelineHeight / 2) + (element.clientHeight / 2);
+                
+                timeline.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth'
+                });
             }
             
             lastChordIndex = currentIndex;
@@ -349,9 +389,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function findCurrentChord(currentTime) {
-        return chordSequence.find(chord => 
-            currentTime >= chord.startTime && currentTime < chord.endTime
-        );
+        return chordSequence.find(chord => {
+            const chordData = parseChordData(chord.chord);
+            return chordData && 
+                currentTime >= chordData.startTime && 
+                currentTime < chordData.endTime;
+        });
     }
 
     function clearActiveChords() {
@@ -396,28 +439,52 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset play button state
         playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        currentChordBox.classList.remove('playing');
         
         // Display chord sequence
         const timeline = document.querySelector('.chord-timeline');
         timeline.innerHTML = '';
         
+        // Calculate min and max durations for scaling
+        const durations = chords.map(item => {
+            const chordData = parseChordData(item.chord);
+            return chordData ? chordData.endTime - chordData.startTime : 0;
+        });
+        const minDuration = Math.min(...durations.filter(d => d > 0));
+        const maxDuration = Math.max(...durations);
+
         chords.forEach((item, index) => {
             const marker = document.createElement('div');
             marker.className = 'chord-marker';
-            let displayChord = `${item.root}${formatChordType(item.type)}`;
-            if (displayChord === 'N') displayChord = '🎵';
-            marker.innerHTML = `
-                ${displayChord}
-                <span class="time-indicator">${formatTime(item.startTime)}</span>
-            `;
+            const chordData = parseChordData(item.chord);
             
-            marker.addEventListener('click', () => {
-                wavesurfer.play(item.startTime);
-                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                currentChordBox.classList.add('playing');
-                clearActiveChords();
-                marker.classList.add('active');
-            });
+            if (chordData) {
+                // Calculate duration and scale it to width
+                const duration = chordData.endTime - chordData.startTime;
+                const baseWidth = 80; // minimum width in pixels
+                const maxWidth = 200; // maximum width in pixels
+                const widthRange = maxWidth - baseWidth;
+                
+                // Scale duration logarithmically to make differences more visible
+                const normalizedWidth = baseWidth + (widthRange * (duration - minDuration) / (maxDuration - minDuration));
+                marker.style.setProperty('--chord-width', `${normalizedWidth}px`);
+                
+                let displayChord = chordData.root === 'N' ? '🎵' : 
+                    `${chordData.root}${formatChordType(chordData.type)}`;
+                
+                marker.innerHTML = `
+                    ${displayChord}
+                    <span class="time-indicator">${formatTime(chordData.startTime)}</span>
+                `;
+                
+                marker.addEventListener('click', () => {
+                    wavesurfer.play(chordData.startTime);
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    currentChordBox.classList.add('playing');
+                    clearActiveChords();
+                    marker.classList.add('active');
+                });
+            }
             
             timeline.appendChild(marker);
         });
@@ -434,6 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset last chord index
         lastChordIndex = -1;
+        
+        // Hide upload section
+        document.querySelector('.upload-section').style.display = 'none';
     }
 
     const uploadArea = document.querySelector('.upload-area');
@@ -484,11 +554,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleFiles(files) {
+        if (!files || !files.length) {
+            uploadText.textContent = 'Drop your MP3 here or click to browse';
+            uploadHint.textContent = 'Drag and drop or click to select';
+            uploadArea.classList.remove('success', 'error');
+            analyzeBtn.style.display = 'none';
+            return;
+        }
+
         if (files[0].type !== 'audio/mpeg') {
             uploadText.textContent = 'Please select an MP3 file';
             uploadHint.textContent = 'Only MP3 files are supported';
             uploadArea.classList.add('error');
-            analyzeBtn.disabled = true;
+            uploadArea.classList.remove('success');
+            analyzeBtn.style.display = 'none';
             return;
         }
 
@@ -496,6 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadHint.textContent = 'File ready for analysis';
         uploadArea.classList.remove('error');
         uploadArea.classList.add('success');
+        analyzeBtn.style.display = 'inline-block';
         analyzeBtn.disabled = false;
     }
 

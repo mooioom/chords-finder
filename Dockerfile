@@ -33,11 +33,12 @@ RUN pip install --no-cache-dir numpy==1.20.3
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create necessary directories
-RUN mkdir -p app/static/uploads app/static/css app/static/js templates
+RUN mkdir -p app/static/uploads app/static/css app/static/js templates tests
 
 # Copy application code
 COPY app app/
 COPY templates templates/
+COPY tests tests/
 COPY run.py config.py ./
 
 # Set permissions
