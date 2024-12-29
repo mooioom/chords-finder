@@ -89,5 +89,4 @@ If you encounter any issues:
 3. If the analysis takes too long, try with a smaller file first
 4. Check the browser console for any JavaScript errors
 
-Created by Eldad Levi using Cursor-AI (anthropic)
-Licened MIT fork it, upgrade and give some music to the world 🎸
+Created by Eldad Levi using Cursor-AI (anthropic) - private project all rights reserved
