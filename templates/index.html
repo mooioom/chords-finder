@@ -71,6 +71,34 @@
         <div id="error-message" class="alert alert-danger d-none"></div>
     </div>
 
+    <!-- Tuner Button and Overlay -->
+    <div class="tuner-button">
+        <button id="tunerBtn" class="btn btn-primary rounded-circle">
+            <i class="fas fa-guitar"></i>
+        </button>
+    </div>
+
+    <div id="tunerOverlay" class="tuner-overlay">
+        <div class="tuner-content">
+            <button class="close-tuner">×</button>
+            <h2>Instrument Tuner</h2>
+            
+            <select id="tuningSystem" class="tuning-selector">
+                <option value="guitar">Guitar (Standard E A D G B E)</option>
+                <option value="guitar-drop-d">Guitar Drop D (D A D G B E)</option>
+                <option value="violin">Violin (G D A E)</option>
+                <option value="viola">Viola (C G D A)</option>
+                <option value="cello">Cello (C G D A)</option>
+                <option value="oud">Oud (C F A D G C)</option>
+                <option value="buzuki">Buzuki (C F A D)</option>
+            </select>
+
+            <div id="tuningButtons" class="tuning-buttons">
+                <!-- Buttons will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="mt-5">
         <div class="footer-content">
@@ -787,6 +815,198 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call setup after DOM is loaded
     setupTransposeButtons();
+
+    // Tuner functionality
+    const tunerBtn = document.getElementById('tunerBtn');
+    const tunerOverlay = document.getElementById('tunerOverlay');
+    const closeBtn = document.querySelector('.close-tuner');
+    const tuningSystem = document.getElementById('tuningSystem');
+    const tuningButtons = document.getElementById('tuningButtons');
+    let oscillator = null;
+    let gainNode = null;
+    let cleanupTimeout = null;
+
+    const tuningFrequencies = {
+        'guitar': {
+            strings: ['E4: 329.63', 'B3: 246.94', 'G3: 196.00', 'D3: 146.83', 'A2: 110.00', 'E2: 82.41'],
+            names: ['1st (E)', '2nd (B)', '3rd (G)', '4th (D)', '5th (A)', '6th (E)']
+        },
+        'guitar-drop-d': {
+            strings: ['E4: 329.63', 'B3: 246.94', 'G3: 196.00', 'D3: 146.83', 'A2: 110.00', 'D2: 73.42'],
+            names: ['1st (E)', '2nd (B)', '3rd (G)', '4th (D)', '5th (A)', '6th (D)']
+        },
+        'violin': {
+            strings: ['E5: 659.26', 'A4: 440.00', 'D4: 293.66', 'G3: 196.00'],
+            names: ['1st (E)', '2nd (A)', '3rd (D)', '4th (G)']
+        },
+        'viola': {
+            strings: ['A4: 440.00', 'D4: 293.66', 'G3: 196.00', 'C3: 130.81'],
+            names: ['1st (A)', '2nd (D)', '3rd (G)', '4th (C)']
+        },
+        'cello': {
+            strings: ['A3: 220.00', 'D3: 146.83', 'G2: 98.00', 'C2: 65.41'],
+            names: ['1st (A)', '2nd (D)', '3rd (G)', '4th (C)']
+        },
+        'oud': {
+            strings: ['C5: 523.25', 'G4: 392.00', 'D4: 293.66', 'A3: 220.00', 'F3: 174.61', 'C3: 130.81'],
+            names: ['1st (C)', '2nd (G)', '3rd (D)', '4th (A)', '5th (F)', '6th (C)']
+        },
+        'buzuki': {
+            strings: ['C5: 523.25', 'F4: 349.23', 'A4: 440.00', 'D4: 293.66'],
+            names: ['1st (C)', '2nd (F)', '3rd (A)', '4th (D)']
+        }
+    };
+
+    function createTuningButtons(instrument) {
+        tuningButtons.innerHTML = '';
+        const frequencies = tuningFrequencies[instrument];
+        
+        frequencies.strings.forEach((freq, index) => {
+            const [note, frequency] = freq.split(': ');
+            const button = document.createElement('button');
+            button.className = 'tuning-button';
+            button.dataset.frequency = frequency;
+            button.innerHTML = `
+                <span class="note">${note}</span>
+                <span class="string-name">${frequencies.names[index]}</span>
+                <span class="frequency">${frequency} Hz</span>
+            `;
+            
+            button.addEventListener('click', () => toggleNote(frequency, button));
+            
+            tuningButtons.appendChild(button);
+        });
+    }
+
+    function toggleNote(frequency, button) {
+        if (button.classList.contains('playing')) {
+            stopNote();
+            button.classList.remove('playing');
+        } else {
+            // Stop any other playing notes
+            document.querySelectorAll('.tuning-button.playing').forEach(btn => {
+                btn.classList.remove('playing');
+            });
+            stopNote();
+            
+            // Play the new note
+            playNote(frequency);
+            button.classList.add('playing');
+        }
+    }
+
+    function playNote(frequency) {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // Clear any pending cleanup
+        if (cleanupTimeout) {
+            clearTimeout(cleanupTimeout);
+            cleanupTimeout = null;
+        }
+
+        // If there's a current oscillator, disconnect it immediately
+        if (oscillator) {
+            oscillator.disconnect();
+            oscillator = null;
+        }
+        if (gainNode) {
+            gainNode.disconnect();
+            gainNode = null;
+        }
+
+        // Create and configure oscillator
+        oscillator = audioContext.createOscillator();
+        gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        
+        // Set gain to absolute zero and connect
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        
+        // Connect nodes
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Start oscillator
+        oscillator.start();
+        
+        // Delay the fade-in slightly to avoid the initial tick
+        setTimeout(() => {
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
+        }, 5);
+    }
+
+    function stopNote() {
+        if (gainNode) {
+            const now = audioContext.currentTime;
+            
+            // Cancel any scheduled values
+            gainNode.gain.cancelScheduledValues(now);
+            
+            // Get current gain value
+            const currentGain = gainNode.gain.value;
+            
+            // Start fade-out from current value
+            gainNode.gain.setValueAtTime(currentGain, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+            
+            // Store current oscillator and gain node references
+            const currentOscillator = oscillator;
+            const currentGainNode = gainNode;
+            
+            // Clear references immediately
+            oscillator = null;
+            gainNode = null;
+            
+            // Schedule the cleanup after fade-out
+            if (cleanupTimeout) {
+                clearTimeout(cleanupTimeout);
+            }
+            
+            cleanupTimeout = setTimeout(() => {
+                if (currentOscillator) {
+                    currentOscillator.stop();
+                    currentOscillator.disconnect();
+                }
+                if (currentGainNode) {
+                    currentGainNode.disconnect();
+                }
+                cleanupTimeout = null;
+            }, 150); // Give a little extra time after the fade
+        }
+    }
+
+    tunerBtn.addEventListener('click', () => {
+        tunerOverlay.classList.add('active');
+        createTuningButtons(tuningSystem.value);
+    });
+
+    closeBtn.addEventListener('click', () => {
+        tunerOverlay.classList.remove('active');
+        stopNote();
+        // Remove playing state from all buttons
+        document.querySelectorAll('.tuning-button.playing').forEach(btn => {
+            btn.classList.remove('playing');
+        });
+    });
+
+    tuningSystem.addEventListener('change', (e) => {
+        createTuningButtons(e.target.value);
+        stopNote();
+    });
+
+    // Stop sound when clicking outside the tuning buttons
+    tunerOverlay.addEventListener('click', (e) => {
+        if (e.target === tunerOverlay) {
+            stopNote();
+            document.querySelectorAll('.tuning-button.playing').forEach(btn => {
+                btn.classList.remove('playing');
+            });
+        }
+    });
 });
 </script>
 {% endblock %} 
