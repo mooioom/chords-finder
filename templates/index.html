@@ -160,11 +160,14 @@ document.addEventListener('DOMContentLoaded', function() {
         barRadius: 3,
         cursorWidth: 1,
         height: 100,
+        width: '100%',
         barGap: 3,
         backend: 'WebAudio',
         normalize: true,
         responsive: true
     });
+
+    window.wavesurfer = wavesurfer;
 
     // Add ready event handler
     wavesurfer.on('ready', function() {
@@ -182,6 +185,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Now that audio is ready, show the results and hide loader
         loader.classList.add('d-none');
         resultsContainer.classList.remove('d-none');
+
+        wavesurfer.drawBuffer()
         
         // Show play button
         playBtn.disabled = false;
@@ -1243,22 +1248,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 isYoutube: true,
                 videoId: videoId
             };
-            
-            // Clear any previous results
-            const timeline = document.querySelector('.chord-timeline');
-            if (timeline) timeline.innerHTML = '';
-            
-            // Hide loader and show results
-            loader.classList.add('d-none');
-            resultsContainer.classList.remove('d-none');
-            
-            // Store the chord sequence globally
-            chordSequence = data.chord_sequence;
-            
+
             // Load audio from the processed file
             fetch(`/youtube/audio/${videoId}`)
                 .then(response => response.blob())
                 .then(blob => {
+                    // Clear any previous results
+                    const timeline = document.querySelector('.chord-timeline');
+                    if (timeline) timeline.innerHTML = '';
+                    
+                    // Hide loader and show results
+                    // loader.classList.add('d-none');
+                    resultsContainer.classList.remove('d-none');
+                    
+                    // Store the chord sequence globally
+                    chordSequence = data.chord_sequence;
                     wavesurfer.loadBlob(blob);
                     // Display the results after audio is loaded
                     displayResults(data.chord_sequence, fileInfo);
@@ -1268,6 +1272,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Still display results even if audio loading fails
                     displayResults(data.chord_sequence, fileInfo);
                 });
+            
+            
+            
+            
         })
         .catch(error => {
             console.error('Processing error:', error);
