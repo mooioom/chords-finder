@@ -179,6 +179,21 @@ document.addEventListener('DOMContentLoaded', function() {
         playBtn.style.display = 'inline-block';  // Show button when ready
     });
 
+    // Add play event handler
+    wavesurfer.on('play', function() {
+        playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        currentChordBox.classList.add('playing');
+        startGeneratingNotes();
+        requestAnimationFrame(analyzeAudio);
+    });
+
+    // Add pause event handler
+    wavesurfer.on('pause', function() {
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        currentChordBox.classList.remove('playing');
+        stopGeneratingNotes();
+    });
+
     // Add error event handler
     wavesurfer.on('error', function(err) {
         console.error('WaveSurfer error:', err);
@@ -256,30 +271,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (wavesurfer.isPlaying()) {
                 wavesurfer.pause();
-                playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                currentChordBox.classList.remove('playing');
-                stopGeneratingNotes();
             } else {
                 // Check if audio context is suspended (browser autoplay policy)
                 if (audioContext && audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
                 
-                const playPromise = wavesurfer.play();
-                if (playPromise !== undefined) {
-                    await playPromise;
-                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    currentChordBox.classList.add('playing');
-                    startGeneratingNotes();
-                }
+                await wavesurfer.play();
             }
         } catch (error) {
             console.error('Playback error:', error);
             // Reset to initial state
             wavesurfer.pause();
-            playBtn.innerHTML = '<i class="fas fa-play"></i>';
-            currentChordBox.classList.remove('playing');
-            stopGeneratingNotes();
         } finally {
             isPlaybackStarting = false;
             playBtn.disabled = false;
