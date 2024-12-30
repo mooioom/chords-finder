@@ -19,6 +19,20 @@
                 <i class="fas fa-wand-magic-sparkles me-2"></i>Analyze
             </button>
         </div>
+
+        <!-- YouTube Search -->
+        <div class="text-center mt-4">
+            <p class="text-muted">- or search on YouTube -</p>
+            <div class="youtube-search-container">
+                <div class="youtube-search-input-wrapper">
+                    <i class="fab fa-youtube youtube-search-icon"></i>
+                    <input type="text" id="youtube-search" class="form-control" placeholder="Search YouTube...">
+                </div>
+                <div id="youtube-results" class="youtube-results">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Loader -->
@@ -33,7 +47,7 @@
     <div id="results-container" class="d-none">
         <!-- Controls Section -->
         <div class="controls-section mb-4">
-            <button id="playBtn" class="btn btn-primary btn-lg me-2">
+            <button id="playBtn" class="btn btn-primary btn-lg me-2" style="display: none;">
                 <i class="fas fa-play"></i>
             </button>
             <button id="uploadMoreBtn" class="btn btn-outline-light btn-lg">
@@ -144,10 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
         cursorWidth: 1,
         height: 100,
         barGap: 3,
-        backend: 'WebAudio'
+        backend: 'WebAudio',
+        normalize: true,
+        responsive: true
     });
 
-    // Set up audio analysis when audio is loaded
+    // Add ready event handler
     wavesurfer.on('ready', function() {
         if (!audioContext) {
             audioContext = wavesurfer.backend.ac;
@@ -158,10 +174,19 @@ document.addEventListener('DOMContentLoaded', function() {
             wavesurfer.backend.setFilter(analyser);
             
             dataArray = new Uint8Array(analyser.frequencyBinCount);
-            
-            // Start the animation loop
-            requestAnimationFrame(analyzeAudio);
         }
+        playBtn.disabled = false;
+        playBtn.style.display = 'inline-block';  // Show button when ready
+    });
+
+    // Add error event handler
+    wavesurfer.on('error', function(err) {
+        console.error('WaveSurfer error:', err);
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        playBtn.disabled = true;
+        playBtn.style.display = 'none';  // Hide button on error
+        currentChordBox.classList.remove('playing');
+        stopGeneratingNotes();
     });
 
     function analyzeAudio() {
@@ -219,38 +244,77 @@ document.addEventListener('DOMContentLoaded', function() {
         requestAnimationFrame(analyzeAudio);
     }
 
-    // Playback controls
-    playBtn.addEventListener('click', function() {
-        if (wavesurfer.isPlaying()) {
+    // Playback controls with better state handling
+    let isPlaybackStarting = false;
+    
+    playBtn.addEventListener('click', async function() {
+        if (isPlaybackStarting) return; // Prevent multiple rapid clicks
+        
+        try {
+            isPlaybackStarting = true;
+            playBtn.disabled = true;
+
+            if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                currentChordBox.classList.remove('playing');
+                stopGeneratingNotes();
+            } else {
+                // Check if audio context is suspended (browser autoplay policy)
+                if (audioContext && audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+                
+                const playPromise = wavesurfer.play();
+                if (playPromise !== undefined) {
+                    await playPromise;
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    currentChordBox.classList.add('playing');
+                    startGeneratingNotes();
+                }
+            }
+        } catch (error) {
+            console.error('Playback error:', error);
+            // Reset to initial state
             wavesurfer.pause();
             playBtn.innerHTML = '<i class="fas fa-play"></i>';
             currentChordBox.classList.remove('playing');
             stopGeneratingNotes();
-        } else {
-            wavesurfer.play();
-            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-            currentChordBox.classList.add('playing');
-            startGeneratingNotes();
+        } finally {
+            isPlaybackStarting = false;
+            playBtn.disabled = false;
         }
     });
 
-    // Update current chord during playback
+    // Update current chord during playback with error handling
     wavesurfer.on('audioprocess', function(currentTime) {
-        requestAnimationFrame(() => {
-            updateCurrentChord(currentTime);
-        });
+        if (!wavesurfer.isPlaying()) return;
+        
+        try {
+            requestAnimationFrame(() => {
+                updateCurrentChord(currentTime);
+            });
+        } catch (error) {
+            console.error('Error updating current chord:', error);
+        }
     });
 
     wavesurfer.on('finish', function() {
-        playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
-        clearActiveChords();
-        currentChordValue.textContent = '';
-        currentTimeValue.textContent = '';
-        lastChordIndex = -1;
-        currentChordBox.classList.remove('playing');
-        // Reset transform and glow
-        currentChordBox.style.transform = 'scale(1)';
-        currentChordBox.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2)';
+        try {
+            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playBtn.disabled = false;
+            clearActiveChords();
+            currentChordValue.textContent = '';
+            currentTimeValue.textContent = '';
+            lastChordIndex = -1;
+            currentChordBox.classList.remove('playing');
+            stopGeneratingNotes();
+            // Reset transform and glow
+            currentChordBox.style.transform = 'scale(1)';
+            currentChordBox.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2)';
+        } catch (error) {
+            console.error('Error in finish handler:', error);
+        }
     });
 
     // Handle file analysis
@@ -258,12 +322,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = fileInput.files[0];
         if (!file) return;
         
-        // Reset UI
+        // Reset UI and audio state
         errorMessage.classList.add('d-none');
         resultsContainer.classList.add('d-none');
         loader.classList.remove('d-none');
-        uploadSection.style.display = 'none';  // Hide entire upload section
+        uploadSection.style.display = 'none';
         lastChordIndex = -1;
+        
+        // Stop and clear any existing audio
+        wavesurfer.stop();
+        wavesurfer.empty();
+        playBtn.style.display = 'none';
+        playBtn.disabled = true;
+        
+        // Clear any existing chord sequence
+        chordSequence = [];
         
         const formData = new FormData();
         formData.append('file', file);
@@ -286,6 +359,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Parse and display chord sequence
             chordSequence = data.chord_sequence;
+            
+            // Load the new audio file
+            wavesurfer.loadBlob(file);
             displayResults(data.chord_sequence, file);
             
         } catch (error) {
@@ -308,6 +384,10 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadHint.textContent = 'Drag and drop or click to select';
         uploadArea.classList.remove('success', 'error');
         
+        // Reset YouTube search
+        youtubeSearch.value = '';
+        youtubeResults.innerHTML = '';
+        
         // Show upload section and hide results
         uploadSection.style.display = 'block';
         resultsContainer.classList.add('d-none');
@@ -318,12 +398,23 @@ document.addEventListener('DOMContentLoaded', function() {
             wavesurfer.stop();
         }
         
+        // Reset wavesurfer
+        wavesurfer.empty();
+        
         // Reset states
         currentChordValue.textContent = '';
         currentTimeValue.textContent = '';
         lastChordIndex = -1;
         currentChordBox.classList.remove('playing');
-        stopGeneratingNotes();
+        playBtn.style.display = 'none';
+        playBtn.disabled = true;
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        
+        // Clear file info display
+        const fileInfoDisplay = document.querySelector('.file-info-display');
+        if (fileInfoDisplay) {
+            fileInfoDisplay.remove();
+        }
     });
 
     function formatTime(seconds) {
@@ -438,6 +529,10 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTransposition = 0;
         updateTransposeIndicator();
         
+        // Hide play button until audio is ready
+        playBtn.style.display = 'none';
+        playBtn.disabled = true;
+        
         // Remove previous file info display if exists
         const existingFileInfo = document.querySelector('.file-info-display');
         if (existingFileInfo) {
@@ -461,13 +556,10 @@ document.addEventListener('DOMContentLoaded', function() {
             fileInfoDisplay.style.opacity = '1';
         });
 
-        // Reset wavesurfer and load new file
-        wavesurfer.stop();
-        wavesurfer.loadBlob(file);
-        
         // Reset play button state
         playBtn.innerHTML = '<i class="fas fa-play"></i>';
         currentChordBox.classList.remove('playing');
+        stopGeneratingNotes();
         
         // Display chord sequence
         const timeline = document.querySelector('.chord-timeline');
@@ -1007,6 +1099,153 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // YouTube Search Implementation
+    const youtubeSearch = document.getElementById('youtube-search');
+    const youtubeResults = document.getElementById('youtube-results');
+    let searchTimeout;
+
+    youtubeSearch.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 3) {
+            youtubeResults.innerHTML = '';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            searchYoutube(query);
+        }, 500);
+    });
+
+    function searchYoutube(query) {
+        youtubeResults.innerHTML = `
+            <div class="youtube-results-loading">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p>Searching YouTube...</p>
+            </div>`;
+        
+        fetch(`/youtube/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                youtubeResults.innerHTML = '';
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(video => {
+                        const resultElement = createVideoResult(video);
+                        youtubeResults.appendChild(resultElement);
+                    });
+                } else {
+                    youtubeResults.innerHTML = '<div class="alert alert-info">No results found</div>';
+                }
+            })
+            .catch(error => {
+                youtubeResults.innerHTML = '<div class="alert alert-danger">Error searching YouTube</div>';
+                console.error('YouTube search error:', error);
+            });
+    }
+
+    function createVideoResult(video) {
+        const div = document.createElement('div');
+        div.className = 'youtube-result';
+        
+        // Format duration
+        const duration = video.duration ? formatDuration(video.duration) : 'Unknown';
+        
+        // Create fallback thumbnail URL using video ID
+        const fallbackThumb = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
+        
+        div.innerHTML = `
+            <img src="${video.thumbnail || fallbackThumb}" 
+                alt="" 
+                class="youtube-thumbnail" 
+                onerror="this.onerror=null; this.src='${fallbackThumb}'; if(this.src === '${fallbackThumb}') this.classList.add('error');">
+            <div class="youtube-info">
+                <div class="youtube-title">${video.title}</div>
+                <div class="youtube-duration">
+                    <i class="far fa-clock"></i>
+                    ${duration}
+                </div>
+            </div>
+        `;
+
+        div.addEventListener('click', () => processYoutubeVideo(video.id));
+        return div;
+    }
+
+    function formatDuration(seconds) {
+        if (typeof seconds !== 'number') return 'Unknown';
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    function processYoutubeVideo(videoId) {
+        // Hide upload section and show loader
+        uploadSection.style.display = 'none';
+        loader.classList.remove('d-none');
+        resultsContainer.classList.add('d-none');
+        errorMessage.classList.add('d-none');
+        
+        // Reset any existing audio and hide play button
+        wavesurfer.stop();
+        wavesurfer.empty();
+        playBtn.style.display = 'none';
+        playBtn.disabled = true;
+        
+        fetch('/youtube/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ video_id: videoId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Create a file-like object for displayResults
+            const fileInfo = {
+                name: data.title || 'YouTube Video',
+                isYoutube: true,
+                videoId: videoId
+            };
+            
+            // Clear any previous results
+            const timeline = document.querySelector('.chord-timeline');
+            if (timeline) timeline.innerHTML = '';
+            
+            // Hide loader and show results
+            loader.classList.add('d-none');
+            resultsContainer.classList.remove('d-none');
+            
+            // Store the chord sequence globally
+            chordSequence = data.chord_sequence;
+            
+            // Load audio from the processed file
+            fetch(`/youtube/audio/${videoId}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    wavesurfer.loadBlob(blob);
+                    // Display the results after audio is loaded
+                    displayResults(data.chord_sequence, fileInfo);
+                })
+                .catch(error => {
+                    console.error('Error loading audio:', error);
+                    // Still display results even if audio loading fails
+                    displayResults(data.chord_sequence, fileInfo);
+                });
+        })
+        .catch(error => {
+            console.error('Processing error:', error);
+            errorMessage.textContent = error.message || 'Error processing video';
+            errorMessage.classList.remove('d-none');
+            uploadSection.style.display = 'block';
+            loader.classList.add('d-none');
+        });
+    }
 });
 </script>
 {% endblock %} 
