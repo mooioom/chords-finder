@@ -751,7 +751,7 @@ footer {
 /* Tuner Styles */
 .tuner-button {
     position: fixed;
-    bottom: 20px;
+    bottom: 200px;
     left: 20px;
     z-index: 1000;
 }
