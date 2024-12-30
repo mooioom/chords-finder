@@ -97,7 +97,7 @@ main{
     gap: 15px;
     justify-content: center;
     margin-bottom: 20px;
-    max-height: 250px;
+    max-height: 22em;
     overflow-y: auto;
     padding: 20px;
     background: rgba(255, 255, 255, 0.05);
@@ -354,9 +354,6 @@ main{
     overflow: hidden;
 }
 
-wave{
-    width: 100% !important;
-}
 
 wave {
     scrollbar-width: thin;
