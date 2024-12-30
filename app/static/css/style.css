@@ -68,8 +68,13 @@ main{
     padding: 0px !important;
 }
 
-#loader{
-    margin-top: 150px !important;
+#loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1000;
 }
 
 .main-title {
@@ -1106,4 +1111,19 @@ footer {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.9em;
     margin: 0;
+}
+
+.chord-elements {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    transform: translateY(20px);
+}
+
+.chord-elements.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
 } 

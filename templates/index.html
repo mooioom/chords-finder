@@ -55,25 +55,28 @@
             </button>
         </div>
 
-        <!-- Current Chord Display -->
-        <div id="current-chord-display" class="mb-4">
-            <div class="current-chord-box">
-                <div class="transpose-controls">
-                    <button class="transpose-btn transpose-down">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button class="transpose-btn transpose-up">
-                        <i class="fas fa-plus"></i>
-                    </button>
+        <!-- Chord Elements (grouped together) -->
+        <div class="chord-elements">
+            <!-- Current Chord Display -->
+            <div id="current-chord-display" class="mb-4">
+                <div class="current-chord-box">
+                    <div class="transpose-controls">
+                        <button class="transpose-btn transpose-down">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="transpose-btn transpose-up">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="current-chord-value"></div>
+                    <span class="current-time-value"></span>
                 </div>
-                <div class="current-chord-value"></div>
-                <span class="current-time-value"></span>
             </div>
-        </div>
-        
-        <!-- Chord Sequence -->
-        <div id="chord-sequence" class="mb-4">
-            <div class="chord-timeline custom-scrollbar"></div>
+            
+            <!-- Chord Sequence -->
+            <div id="chord-sequence" class="mb-4">
+                <div class="chord-timeline custom-scrollbar"></div>
+            </div>
         </div>
         
         <!-- Waveform -->
@@ -175,8 +178,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
+        
+        // Now that audio is ready, show the results and hide loader
+        loader.classList.add('d-none');
+        resultsContainer.classList.remove('d-none');
+        
+        // Show play button
         playBtn.disabled = false;
-        playBtn.style.display = 'inline-block';  // Show button when ready
+        playBtn.style.display = 'inline-block';
+        
+        // Show the chord sequence and make chord elements visible
+        displayChordSequence(chordSequence);
+        document.querySelector('.chord-elements').classList.add('visible');
     });
 
     // Add play event handler
@@ -466,14 +479,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const TRANSITION_DURATION = 300; // matches CSS transition duration in ms
 
     function updateCurrentChord(currentTime) {
+        // Add a small offset to compensate for delay (100ms)
+        const adjustedTime = currentTime + 0.1;
+        
         const currentChord = findCurrentChord(currentTime);
         if (!currentChord) return;
 
         const currentIndex = chordSequence.findIndex(chord => {
             const chordData = parseChordData(chord.chord);
             return chordData && 
-                currentTime >= chordData.startTime && 
-                currentTime < chordData.endTime;
+                adjustedTime >= chordData.startTime && 
+                adjustedTime < chordData.endTime;
         });
 
         // Update current chord if it changed
@@ -491,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearActiveChords();
                 element.classList.add('active');
                 
-                // Scroll the active chord into view
+                // Scroll the active chord into view with a small offset
                 const timeline = document.querySelector('.chord-timeline');
                 const elementTop = element.offsetTop;
                 const timelineHeight = timeline.clientHeight;
@@ -511,11 +527,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function findCurrentChord(currentTime) {
+        // Add a small offset to compensate for delay (100ms)
+        const adjustedTime = currentTime + 0.1;
+        
         return chordSequence.find(chord => {
             const chordData = parseChordData(chord.chord);
             return chordData && 
-                currentTime >= chordData.startTime && 
-                currentTime < chordData.endTime;
+                adjustedTime >= chordData.startTime && 
+                adjustedTime < chordData.endTime;
         });
     }
 
@@ -528,45 +547,40 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFileName = '';
 
     function displayResults(chords, file) {
-        // Reset transposition when loading new file
+        // Store chord sequence globally but don't display yet
+        chordSequence = chords;
+        
+        // Reset transposition
         currentTransposition = 0;
         updateTransposeIndicator();
         
-        // Hide play button until audio is ready
+        // Hide play button and chord elements until audio is ready
         playBtn.style.display = 'none';
         playBtn.disabled = true;
         
-        // Remove previous file info display if exists
-        const existingFileInfo = document.querySelector('.file-info-display');
-        if (existingFileInfo) {
-            existingFileInfo.remove();
-        }
-
+        // Hide chord elements and clear any existing content
+        const chordElements = document.querySelector('.chord-elements');
+        chordElements.classList.remove('visible');
+        document.querySelector('.chord-timeline').innerHTML = '';
+        document.querySelector('.current-chord-value').textContent = '';
+        document.querySelector('.current-time-value').textContent = '';
+        
+        // Keep loader visible until wavesurfer is ready
+        loader.classList.remove('d-none');
+        resultsContainer.classList.add('d-none');
+        
         // Update file info
-        currentFileName = file.name;
-        const fileInfoDisplay = document.createElement('div');
-        fileInfoDisplay.className = 'file-info-display';
-        document.querySelector('.main-title').after(fileInfoDisplay);
+        updateFileInfo(file);
         
-        // Add with opacity 0 first
-        fileInfoDisplay.style.opacity = '0';
-        fileInfoDisplay.innerHTML = `
-            <span class="file-name">${currentFileName}</span>
-        `;
-        
-        // Trigger reflow and animate in
-        requestAnimationFrame(() => {
-            fileInfoDisplay.style.opacity = '1';
-        });
+        // Reset states
+        resetPlaybackStates();
+    }
 
-        // Reset play button state
-        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-        currentChordBox.classList.remove('playing');
-        stopGeneratingNotes();
-        
-        // Display chord sequence
+    function displayChordSequence(chords) {
         const timeline = document.querySelector('.chord-timeline');
         timeline.innerHTML = '';
+        
+        if (!chords || chords.length === 0) return;
         
         // Calculate min and max durations for scaling
         const durations = chords.map(item => {
@@ -582,13 +596,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const chordData = parseChordData(item.chord);
             
             if (chordData) {
-                // Calculate duration and scale it to width
                 const duration = chordData.endTime - chordData.startTime;
-                const baseWidth = 80; // minimum width in pixels
-                const maxWidth = 200; // maximum width in pixels
+                const baseWidth = 80;
+                const maxWidth = 200;
                 const widthRange = maxWidth - baseWidth;
                 
-                // Scale duration logarithmically to make differences more visible
                 const normalizedWidth = baseWidth + (widthRange * (duration - minDuration) / (maxDuration - minDuration));
                 marker.style.setProperty('--chord-width', `${normalizedWidth}px`);
                 
@@ -611,22 +623,38 @@ document.addEventListener('DOMContentLoaded', function() {
             
             timeline.appendChild(marker);
         });
+    }
+
+    function updateFileInfo(file) {
+        const existingFileInfo = document.querySelector('.file-info-display');
+        if (existingFileInfo) {
+            existingFileInfo.remove();
+        }
+
+        currentFileName = file.name;
+        const fileInfoDisplay = document.createElement('div');
+        fileInfoDisplay.className = 'file-info-display';
+        document.querySelector('.main-title').after(fileInfoDisplay);
         
-        // Show results container first
-        resultsContainer.classList.remove('d-none');
+        fileInfoDisplay.style.opacity = '0';
+        fileInfoDisplay.innerHTML = `
+            <span class="file-name">${currentFileName}</span>
+        `;
         
-        // Reset states
+        requestAnimationFrame(() => {
+            fileInfoDisplay.style.opacity = '1';
+        });
+    }
+
+    function resetPlaybackStates() {
+        playBtn.innerHTML = '<i class="fas fa-play"></i>';
+        currentChordBox.classList.remove('playing');
+        stopGeneratingNotes();
         currentChordValue.textContent = '';
         currentTimeValue.textContent = '';
-        currentChordBox.classList.remove('playing');
+        lastChordIndex = -1;
         currentChordBox.style.transform = 'scale(1)';
         currentChordBox.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2)';
-        
-        // Reset last chord index
-        lastChordIndex = -1;
-        
-        // Hide upload section
-        document.querySelector('.upload-section').style.display = 'none';
     }
 
     const uploadArea = document.querySelector('.upload-area');
