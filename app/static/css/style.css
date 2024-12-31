@@ -671,14 +671,6 @@ footer {
     letter-spacing: 0.5px;
 }
 
-.floating-note {
-    position: fixed;
-    pointer-events: none;
-    will-change: transform, opacity;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    filter: drop-shadow(0 0 5px rgba(0, 123, 255, 0.2));
-}
-
 .transpose-controls {
     position: absolute;
     top: 50%;
