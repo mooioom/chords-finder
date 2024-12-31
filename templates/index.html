@@ -500,10 +500,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentIndex >= 0 && chordElements[currentIndex]) {
                 const element = chordElements[currentIndex];
                 
-                // Update text immediately
-                const markerChordText = element.childNodes[0].textContent.trim();
+                // Update text immediately - only show chord, not time
+                const markerChordText = element.querySelector('.chord-content').textContent.trim();
                 currentChordValue.textContent = markerChordText;
-                currentTimeValue.textContent = `(${formatTime(currentTime)})`;
                 
                 // Update highlighted chord in the sequence
                 clearActiveChords();
@@ -522,9 +521,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             lastChordIndex = currentIndex;
-        } else {
-            // Just update the time
-            currentTimeValue.textContent = `(${formatTime(currentTime)})`;
+        }
+
+        // Update progress bar for current chord
+        if (currentIndex >= 0) {
+            const chordData = parseChordData(chordSequence[currentIndex].chord);
+            if (chordData) {
+                const chordDuration = chordData.endTime - chordData.startTime;
+                const chordProgress = ((currentTime - chordData.startTime) / chordDuration) * 100;
+                const progressBar = document.querySelector('.chord-marker.active .chord-progress');
+                if (progressBar) {
+                    progressBar.style.width = `${Math.min(100, Math.max(0, chordProgress))}%`;
+                }
+            }
         }
     }
 
@@ -543,6 +552,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearActiveChords() {
         document.querySelectorAll('.chord-marker').forEach(marker => {
             marker.classList.remove('active');
+            const progressBar = marker.querySelector('.chord-progress');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
         });
     }
 
@@ -609,10 +622,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 let displayChord = chordData.root === 'N' ? '🎵' : 
                     `${chordData.root}${formatChordType(chordData.type)}`;
                 
-                marker.innerHTML = `
-                    ${displayChord}
-                    <span class="time-indicator">${formatTime(chordData.startTime)}</span>
-                `;
+                // Create chord content - removed time indicator
+                const chordContent = document.createElement('div');
+                chordContent.className = 'chord-content';
+                chordContent.textContent = displayChord;
+                
+                // Create progress bar
+                const progressBar = document.createElement('div');
+                progressBar.className = 'chord-progress';
+                
+                // Add elements to marker
+                marker.appendChild(chordContent);
+                marker.appendChild(progressBar);
                 
                 marker.addEventListener('click', () => {
                     wavesurfer.play(chordData.startTime);

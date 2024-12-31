@@ -26,10 +26,7 @@ html {
 body {
     background: 
         linear-gradient(45deg, rgba(0,0,0,0.95), rgba(10,10,10,0.95)),
-        radial-gradient(circle at 50% 50%, rgba(20,20,20,0.9), rgba(0,0,0,0.95)),
-        linear-gradient(to right, #0a0a0a, #1a1a1a);
-    background-size: 200% 200%, 100% 100%, 100% 100%;
-    animation: gradientBG 15s ease infinite;
+        radial-gradient(circle at 50% 50%, rgba(20,20,20,0.9), rgba(0,0,0,0.95));
     min-height: 100vh;
     margin: 0;
     padding: 20px;
@@ -143,6 +140,12 @@ main{
                 box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: markerColorFlow 10s linear infinite;
     width: var(--chord-width, 80px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes markerColorFlow {
@@ -508,10 +511,12 @@ wave::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     z-index: 1000;
+    pointer-events: none;
 }
 
 .controls-section button {
     border-radius: 50%;
+    pointer-events: all;
 }
 
 footer {
@@ -1193,4 +1198,54 @@ html {
     background: rgba(255, 255, 255, 0.15);
     border: 2px solid transparent;
     background-clip: padding-box;
+} 
+
+/* Add progress bar styles */
+.chord-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 6px;
+    background: linear-gradient(to right, 
+        rgba(0, 123, 255, 0.8),
+        rgba(0, 123, 255, 1.0)
+    );
+    box-shadow: 
+        0 0 15px rgba(0, 123, 255, 0.6),
+        0 0 5px rgba(0, 123, 255, 0.8);
+    z-index: 2;
+    transform-origin: left center;
+    border-radius: 0 3px 3px 0;
+}
+
+/* Only apply transition when the marker is active */
+.chord-marker.active .chord-progress {
+    transition: width 0.1s linear;
+    opacity: 1;
+    animation: progressGlow 2s ease-in-out infinite;
+}
+
+/* Remove transition when inactive */
+.chord-marker:not(.active) .chord-progress {
+    transition: none;
+    width: 0% !important;
+}
+
+@keyframes progressGlow {
+    0% {
+        box-shadow: 
+            0 0 15px rgba(0, 123, 255, 0.6),
+            0 0 5px rgba(0, 123, 255, 0.8);
+    }
+    50% {
+        box-shadow: 
+            0 0 25px rgba(0, 123, 255, 0.8),
+            0 0 8px rgba(0, 123, 255, 1.0);
+    }
+    100% {
+        box-shadow: 
+            0 0 15px rgba(0, 123, 255, 0.6),
+            0 0 5px rgba(0, 123, 255, 0.8);
+    }
 } 
