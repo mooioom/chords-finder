@@ -343,6 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset UI and audio state
         errorMessage.classList.add('d-none');
         resultsContainer.classList.add('d-none');
+        document.querySelector('#loader p').textContent = 'Analyzing chords...';
         loader.classList.remove('d-none');
         uploadSection.style.display = 'none';
         lastChordIndex = -1;
@@ -1129,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function processYoutubeVideo(videoId) {
         // Hide upload section and show loader
         uploadSection.style.display = 'none';
+        document.querySelector('#loader p').textContent = 'Analyzing chords...';
         loader.classList.remove('d-none');
         resultsContainer.classList.add('d-none');
         errorMessage.classList.add('d-none');
@@ -1158,6 +1160,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 isYoutube: true,
                 videoId: videoId
             };
+
+            document.querySelector('#loader p').textContent = 'Loading audio...';
 
             // Load audio from the processed file
             fetch(`/youtube/audio/${videoId}`)
