@@ -118,6 +118,7 @@ main{
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     backdrop-filter: blur(10px);
+    box-shadow: inset 0px 50px 15px rgba(0, 0, 0, 0.6);
 }
 
 .chord-marker {
@@ -1073,13 +1074,27 @@ footer {
     border-radius: 6px;
     margin-right: 15px;
     background: rgba(0, 0, 0, 0.2);
+    position: relative;
 }
 
-.youtube-thumbnail.error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.4);
+.youtube-thumbnail-wrapper {
+    position: relative;
+    width: 160px;
+    height: 90px;
+    margin-right: 15px;
+}
+
+.youtube-duration {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .youtube-info {
@@ -1093,77 +1108,25 @@ footer {
     font-size: 1.1em;
 }
 
-.youtube-duration {
-    font-size: 0.9em;
-    color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.youtube-duration i {
-    font-size: 0.9em;
-    color: rgba(255, 0, 0, 0.8);
-}
-
-/* YouTube Results Loading State */
-.youtube-results-loading {
-    padding: 40px;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-}
-
-.youtube-results-loading .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    margin-bottom: 15px;
-}
-
-.youtube-results-loading p {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9em;
-    margin: 0;
-}
-
-.chord-elements {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    transform: translateY(20px);
-}
-
-.chord-elements.visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-
-/* Add mobile styles for YouTube results */
+/* Mobile styles for YouTube results */
 @media (max-width: 576px) {
-    body {
-        padding: 0;
-    }
-
-    .upload-section {
-        margin-top: 0;
-        border-radius: 0;
-    }
-
     .youtube-result {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
     }
 
-    .youtube-thumbnail {
+    .youtube-thumbnail-wrapper {
         width: 100% !important;
         height: auto !important;
         aspect-ratio: 16/9;
         margin-right: 0 !important;
+    }
+
+    .youtube-thumbnail {
+        width: 100%;
+        height: 100%;
+        margin-right: 0;
     }
 
     .youtube-info {
@@ -1254,6 +1217,9 @@ html {
 
 /* Mobile styles for upload area */
 @media (max-width: 576px) {
+    body{
+        padding: 0;
+    }
     .upload-area {
         min-height: unset;
         border: none;
@@ -1262,6 +1228,8 @@ html {
         width: 100%;
         display: flex;
         justify-content: center;
+        font-size: 11px;
+        letter-spacing: 2px;
     }
 
     .upload-area .upload-content {
@@ -1269,8 +1237,9 @@ html {
     }
 
     .upload-area::after {
-        content: 'Select an audio file...';
-        font-family: 'Outfit', sans-serif;
+        content: '\f093  Select an audio file...';
+        font-family: 'Font Awesome 5 Free', 'Outfit', sans-serif;
+        font-weight: 900;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1278,7 +1247,6 @@ html {
         width: 100%;
         padding: 15px 20px;
         font-size: 1.2em;
-        font-weight: 600;
         color: white;
         background: linear-gradient(135deg, rgba(0, 123, 255, 0.2), rgba(0, 123, 255, 0.3));
         border: 1px solid rgba(255, 255, 255, 0.2);
