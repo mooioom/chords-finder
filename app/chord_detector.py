@@ -7,7 +7,7 @@ def detect_chords(audio_file):
     # This includes major, minor, dominant 7th, major 7th, minor 7th, diminished
     chord_processor = DeepChromaChordRecognitionProcessor(
         models=['majmin', 'maj7', 'min7', '7', 'dim'],  # Include more chord types
-        fps=10  # Frames per second - adjust if needed
+        fps=20  # Increased from 10 to 20 for more precise timing
     )
     
     # Create the processing pipeline

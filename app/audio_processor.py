@@ -31,20 +31,73 @@ def process_audio_file(file_path):
 
         # Format results
         results = []
-        if hasattr(chord_sequence, 'shape'):
+        last_chord = None
+        last_time = 0.0
+        first_chord = True
+
+        if isinstance(chord_sequence, np.ndarray):
             # Handle numpy array format
-            for i in range(len(chord_sequence)):
+            for i, chord in enumerate(chord_sequence):
+                time = float(i) / 10.0  # Assuming 10 fps
+                
+                if first_chord:
+                    last_chord = chord
+                    last_time = time
+                    first_chord = False
+                    continue
+                
+                if chord != last_chord:
+                    results.append({
+                        'time': last_time,
+                        'chord': f"({last_time}, {time}, '{last_chord}')"
+                    })
+                    last_chord = chord
+                    last_time = time
+
+            # Add the final chord
+            if last_chord:
+                final_time = float(len(chord_sequence)) / 10.0
                 results.append({
-                    'time': float(i * 0.5),  # Assuming 0.5 second intervals
-                    'chord': str(chord_sequence[i])
+                    'time': last_time,
+                    'chord': f"({last_time}, {final_time}, '{last_chord}')"
                 })
         else:
             # Handle list format
             for entry in chord_sequence:
-                results.append({
-                    'time': float(entry[0]) if len(entry) > 0 else 0.0,
-                    'chord': str(entry[1]) if len(entry) > 1 else 'N'
-                })
+                try:
+                    if isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                        time = float(entry[0])
+                        chord = str(entry[1])
+                    else:
+                        continue
+
+                    if first_chord:
+                        last_chord = chord
+                        last_time = time
+                        first_chord = False
+                        continue
+                    
+                    if chord != last_chord:
+                        results.append({
+                            'time': last_time,
+                            'chord': f"({last_time}, {time}, '{last_chord}')"
+                        })
+                        last_chord = chord
+                        last_time = time
+                except (IndexError, ValueError) as e:
+                    logging.warning(f"Skipping malformed entry {entry}: {str(e)}")
+                    continue
+
+            # Add the final chord
+            if last_chord and len(chord_sequence) > 0:
+                try:
+                    final_time = float(chord_sequence[-1][0]) if isinstance(chord_sequence[-1], (list, tuple)) else len(chord_sequence)
+                    results.append({
+                        'time': last_time,
+                        'chord': f"({last_time}, {final_time}, '{last_chord}')"
+                    })
+                except (IndexError, ValueError) as e:
+                    logging.warning(f"Error processing final chord: {str(e)}")
 
         return {
             'status': 'success',

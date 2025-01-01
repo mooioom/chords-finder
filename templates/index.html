@@ -68,7 +68,10 @@
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div class="current-chord-value"></div>
+                    <span class="transpose-number"></span>
+                    <div class="current-chord-wrapper">
+                        <div class="current-chord-value"></div>
+                    </div>
                     <span class="current-time-value"></span>
                 </div>
             </div>
@@ -186,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loader.classList.add('d-none');
         resultsContainer.classList.remove('d-none');
 
-        wavesurfer.drawBuffer()
+        wavesurfer.drawBuffer();
         
         // Show play button
         playBtn.disabled = false;
@@ -497,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update text immediately - only show chord, not time
                 const markerChordText = element.querySelector('.chord-content').textContent.trim();
-                currentChordValue.textContent = markerChordText;
+                document.querySelector('.current-chord-value').textContent = markerChordText;
                 
                 // Update highlighted chord in the sequence
                 clearActiveChords();
@@ -761,25 +764,35 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.appendChild(transposeIndicator);
 
     function updateTransposeIndicator() {
-        const indicator = document.querySelector('.transpose-indicator');
-        const transposeText = indicator.querySelector('strong');
+        const transposeNumber = document.querySelector('.transpose-number');
+        if (!transposeNumber) return;
         
         if (currentTransposition === 0) {
-            indicator.classList.remove('visible');
+            transposeNumber.classList.remove('visible');
+            transposeNumber.textContent = '';
         } else {
-            transposeText.textContent = currentTransposition;
-            indicator.classList.add('visible');
+            transposeNumber.textContent = currentTransposition > 0 ? `+${currentTransposition}` : currentTransposition;
+            transposeNumber.classList.add('visible');
         }
     }
+
+    // Add resize handler to update position
+    window.addEventListener('resize', () => {
+        if (currentTransposition !== 0) {
+            updateTransposeIndicator();
+        }
+    });
 
     function setupTransposeButtons() {
         const transposeDownBtn = document.querySelector('.transpose-down');
         const transposeUpBtn = document.querySelector('.transpose-up');
-        const resetBtn = document.querySelector('.transpose-indicator .reset-btn');
+        const transposeNumber = document.querySelector('.transpose-number');
+        
+        if (!transposeDownBtn || !transposeUpBtn || !transposeNumber) return;
         
         transposeDownBtn.addEventListener('click', () => transposeChords(-1));
         transposeUpBtn.addEventListener('click', () => transposeChords(1));
-        resetBtn.addEventListener('click', resetTransposition);
+        transposeNumber.addEventListener('click', resetTransposition);
     }
 
     function resetTransposition() {
@@ -794,8 +807,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function transposeChords(semitones) {
-        currentTransposition = (currentTransposition + semitones) % 12;
-        if (currentTransposition < 0) currentTransposition += 12;
+        currentTransposition += semitones;
+        if (currentTransposition > 11) currentTransposition -= 12;
+        if (currentTransposition < -11) currentTransposition += 12;
 
         updateAllChords(semitones);
         updateTransposeIndicator();
@@ -846,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Call setup after DOM is loaded
+    // Call setup once when DOM is loaded
     setupTransposeButtons();
 
     // Tuner functionality
@@ -1064,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function() {
         youtubeResults.innerHTML = `
             <div class="youtube-results-loading">
                 <div class="spinner-border text-primary" role="status"></div>
-                <p>Searching YouTube...</p>
+                <p class="mt-2">Searching YouTube...</p>
             </div>`;
         
         fetch(`/youtube/search?q=${encodeURIComponent(query)}`)
