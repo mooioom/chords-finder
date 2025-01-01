@@ -53,25 +53,33 @@
         resizeCanvas();
 
         class Note {
-            constructor() {
+            constructor(isInitial = false) {
                 this.reset();
-                this.y = canvas.height + Math.random() * 20; // Start from bottom
+                if (isInitial) {
+                    // For initial notes, distribute them across the screen
+                    this.y = Math.random() * canvas.height;
+                    this.opacity = 0;
+                } else {
+                    // New notes always start from bottom
+                    this.y = canvas.height + 20;
+                    this.opacity = 0;
+                }
             }
 
             reset() {
                 this.x = Math.random() * canvas.width;
                 this.y = canvas.height + 20;
-                this.speed = 0.8 + Math.random() * 0.6; // Faster movement
-                this.sway = 40 + Math.random() * 60; // More sway
-                this.swaySpeed = 0.8 + Math.random() * 1.5; // More dynamic sway
+                this.speed = 0.8 + Math.random() * 0.6;
+                this.sway = 40 + Math.random() * 60;
+                this.swaySpeed = 0.8 + Math.random() * 1.5;
                 this.rotation = Math.random() * 360;
-                this.rotationSpeed = (-1 + Math.random() * 2) * 1.2; // More rotation
-                this.scale = 0.8 + Math.random() * 0.6; // Bigger notes (0.8-1.4)
+                this.rotationSpeed = (-1 + Math.random() * 2) * 1.2;
+                this.scale = 0.8 + Math.random() * 0.6;
                 this.opacity = 0;
                 this.text = musicEmojis[Math.floor(Math.random() * musicEmojis.length)];
                 this.time = Math.random() * 1000;
-                this.glowIntensity = 0.5 + Math.random() * 0.5; // Random glow intensity
-                this.pulseSpeed = 0.5 + Math.random() * 0.5; // Random pulse speed
+                this.glowIntensity = 0.5 + Math.random() * 0.5;
+                this.pulseSpeed = 0.5 + Math.random() * 0.5;
             }
 
             update() {
@@ -80,16 +88,14 @@
                 this.x += Math.sin(this.time * this.swaySpeed) * 0.5;
                 this.rotation += this.rotationSpeed;
 
-                // Pulsing scale effect
                 const scalePulse = Math.sin(this.time * this.pulseSpeed) * 0.1;
                 this.currentScale = this.scale * (1 + scalePulse);
 
-                // Fade in
-                if (this.opacity < 0.7) { // Higher max opacity
-                    this.opacity += 0.02; // Faster fade in
+                // Slower fade in
+                if (this.opacity < 0.7) {
+                    this.opacity += 0.01; // Reduced from 0.02 to 0.01 for gentler fade
                 }
 
-                // Reset if off screen
                 if (this.y < -50) {
                     this.reset();
                 }
@@ -138,20 +144,31 @@
 
         // Initialize notes and start animation
         function initializeNotes() {
-            // Create initial batch of notes
-            for (let i = 0; i < 20; i++) { // More initial notes
-                notes.push(new Note());
-            }
-
-            // Start animation
+            // Start animation first
             animate();
 
-            // Periodically add new notes
-            setInterval(() => {
-                if (notes.length < 40 && Math.random() < 0.2) { // More max notes and higher spawn rate
-                    notes.push(new Note());
+            // Add initial notes very gradually
+            let addedNotes = 0;
+            const addNote = () => {
+                if (addedNotes < 5) {
+                    // Initial notes distributed across screen
+                    const note = new Note(true);
+                    notes.push(note);
+                    addedNotes++;
+                    setTimeout(addNote, 500); // Add initial notes every 500ms
+                } else {
+                    // After initial notes, start the regular spawning
+                    setInterval(() => {
+                        if (notes.length < 40 && Math.random() < 0.1) { // Reduced spawn chance
+                            const note = new Note(false);
+                            notes.push(note);
+                        }
+                    }, 2000); // Increased interval between spawns
                 }
-            }, 1500); // Shorter interval between spawns
+            };
+
+            // Start adding notes
+            setTimeout(addNote, 1000); // Start first note after 1 second
         }
 
         // Start the animation immediately
