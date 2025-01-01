@@ -672,13 +672,13 @@ footer {
 .transpose-controls {
     position: absolute;
     top: 50%;
-    width: calc(100% + 80px);
     display: flex;
     justify-content: space-between;
     padding: 0;
     pointer-events: none;
     z-index: 10;
     left: -40px;
+    flex-direction: column-reverse;
 }
 
 .transpose-btn {
@@ -1664,18 +1664,6 @@ footer {
     letter-spacing: 0.5px;
 }
 
-.transpose-controls {
-    position: absolute;
-    top: 50%;
-    width: calc(100% + 80px);
-    display: flex;
-    justify-content: space-between;
-    padding: 0;
-    pointer-events: none;
-    z-index: 10;
-    left: -40px;
-}
-
 .transpose-btn {
     width: 45px;
     height: 45px;
@@ -2265,3 +2253,56 @@ html {
         box-shadow: 0 4px 15px rgba(255, 87, 87, 0.2);
     }
 } 
+
+/* Pitch Controls */
+.pitch-controls {
+    position: fixed;
+    right: -50px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pitch-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 123, 255, 0.3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pitch-btn:hover {
+    background: rgba(0, 123, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.pitch-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 123, 255, 0.6);
+}
+
+.pitch-value {
+    font-size: 0.8em;
+    color: white;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.pitch-value.visible {
+    opacity: 1;
+}

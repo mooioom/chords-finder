@@ -85,6 +85,16 @@
         <!-- Waveform -->
         <div class="result-box">
             <div id="waveform"></div>
+            <!-- Audio Pitch Controls -->
+            <div class="pitch-controls">
+                <button class="pitch-btn pitch-up">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="pitch-btn pitch-down">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <span class="pitch-value"></span>
+            </div>
         </div>
         
         <!-- Error Display -->
@@ -152,6 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let dataArray;
     const smoothingTimeConstant = 0.8;
     const fftSize = 2048;
+    
+    // Pitch shifting setup
+    let currentPitch = 0;
 
     // Initialize WaveSurfer with audioContext
     const wavesurfer = WaveSurfer.create({
@@ -180,7 +193,9 @@ document.addEventListener('DOMContentLoaded', function() {
             analyser.smoothingTimeConstant = smoothingTimeConstant;
             analyser.fftSize = fftSize;
             
+            // Connect analyser
             wavesurfer.backend.setFilter(analyser);
+            analyser.connect(audioContext.destination);
             
             dataArray = new Uint8Array(analyser.frequencyBinCount);
         }
@@ -198,7 +213,72 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show the chord sequence and make chord elements visible
         displayChordSequence(chordSequence);
         document.querySelector('.chord-elements').classList.add('visible');
+        
+        // Setup pitch controls
+        setupPitchShifter();
+        
+        // If there was a previous pitch setting, apply it
+        if (currentPitch !== 0) {
+            const rate = Math.pow(2, currentPitch / 12);
+            wavesurfer.setPlaybackRate(rate);
+        }
     });
+
+    function setupPitchShifter() {
+        if (!wavesurfer) return;
+        
+        // Setup pitch controls
+        const pitchDownBtn = document.querySelector('.pitch-btn.pitch-down');
+        const pitchUpBtn = document.querySelector('.pitch-btn.pitch-up');
+        const pitchValue = document.querySelector('.pitch-value');
+        
+        if (!pitchDownBtn || !pitchUpBtn || !pitchValue) return;
+        
+        // Remove old event listeners by cloning and replacing the buttons
+        const newPitchDownBtn = pitchDownBtn.cloneNode(true);
+        const newPitchUpBtn = pitchUpBtn.cloneNode(true);
+        pitchDownBtn.parentNode.replaceChild(newPitchDownBtn, pitchDownBtn);
+        pitchUpBtn.parentNode.replaceChild(newPitchUpBtn, pitchUpBtn);
+        
+        // Add new event listeners
+        newPitchDownBtn.addEventListener('click', () => {
+            currentPitch = Math.max(currentPitch - 1, -12);
+            updatePitch();
+            updatePitchValue();
+            // Transpose chords down
+            transposeChords(-1);
+        });
+        
+        newPitchUpBtn.addEventListener('click', () => {
+            currentPitch = Math.min(currentPitch + 1, 12);
+            updatePitch();
+            updatePitchValue();
+            // Transpose chords up
+            transposeChords(1);
+        });
+        
+        function updatePitchValue() {
+            pitchValue.textContent = currentPitch > 0 ? `+${currentPitch}` : currentPitch;
+            pitchValue.classList.add('visible');
+        }
+        
+        function updatePitch() {
+            // Convert semitones to playback rate
+            const rate = Math.pow(2, currentPitch / 12);
+            
+            // Store current time and playing state
+            const currentTime = wavesurfer.getCurrentTime();
+            const wasPlaying = wavesurfer.isPlaying();
+            
+            // Update playback rate
+            wavesurfer.setPlaybackRate(rate);
+            
+            // Restore position and playing state
+            if (wasPlaying) {
+                wavesurfer.play(currentTime);
+            }
+        }
+    }
 
     // Add play event handler
     wavesurfer.on('play', function() {
@@ -301,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Update current chord during playback with error handling
+    // Update current chord during playback
     wavesurfer.on('audioprocess', function(currentTime) {
         if (!wavesurfer.isPlaying()) return;
         
@@ -479,17 +559,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const TRANSITION_DURATION = 300; // matches CSS transition duration in ms
 
     function updateCurrentChord(currentTime) {
-        // Add a small offset to compensate for delay (100ms)
-        const adjustedTime = currentTime + 0.1;
-        
         const currentChord = findCurrentChord(currentTime);
         if (!currentChord) return;
 
         const currentIndex = chordSequence.findIndex(chord => {
             const chordData = parseChordData(chord.chord);
             return chordData && 
-                adjustedTime >= chordData.startTime && 
-                adjustedTime < chordData.endTime;
+                currentTime >= chordData.startTime && 
+                currentTime < chordData.endTime;
         });
 
         // Update current chord if it changed
@@ -536,14 +613,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function findCurrentChord(currentTime) {
-        // Add a small offset to compensate for delay (100ms)
-        const adjustedTime = currentTime + 0.1;
-        
         return chordSequence.find(chord => {
             const chordData = parseChordData(chord.chord);
             return chordData && 
-                adjustedTime >= chordData.startTime && 
-                adjustedTime < chordData.endTime;
+                currentTime >= chordData.startTime && 
+                currentTime < chordData.endTime;
         });
     }
 
