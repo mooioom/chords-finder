@@ -546,7 +546,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 'file_name': file.name
             });
             
-            displayResults(data, file);
+            // Store the chord sequence globally
+            chordSequence = data.chord_sequence;
+            
+            // Load the audio and display results
+            wavesurfer.loadBlob(file);
+            displayResults(data.chord_sequence, file);
+            
         } catch (error) {
             // Send GA event for file processing error
             gtag('event', 'file_process_error', {
