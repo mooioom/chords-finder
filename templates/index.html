@@ -1614,8 +1614,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Social share buttons
     document.querySelectorAll('.share-social-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const url = encodeURIComponent('http://anysong.ai');
-            const text = encodeURIComponent('Check out ANYSONG.AI - chords for any song! 🎵✨');
+            const url = encodeURIComponent('https://anysong.ai');
+            const text = encodeURIComponent('Check out ANYSONG.AI - Instant chord detection for any song! 🎵✨');
             let shareUrl = '';
             
             if (btn.classList.contains('twitter')) {
@@ -1624,6 +1624,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (btn.classList.contains('facebook')) {
                 shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
                 gtag('event', 'share_facebook');
+            } else if (btn.classList.contains('instagram')) {
+                // Instagram doesn't support direct sharing via URL, copy to clipboard instead
+                navigator.clipboard.writeText(`${decodeURIComponent(text)} ${decodeURIComponent(url)}`);
+                alert('Text copied! Open Instagram and paste to share.');
+                gtag('event', 'share_instagram');
+                return;
+            } else if (btn.classList.contains('tiktok')) {
+                // TikTok doesn't support direct sharing via URL, copy to clipboard instead
+                navigator.clipboard.writeText(`${decodeURIComponent(text)} ${decodeURIComponent(url)}`);
+                alert('Text copied! Open TikTok and paste to share.');
+                gtag('event', 'share_tiktok');
+                return;
             } else if (btn.classList.contains('linkedin')) {
                 shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
                 gtag('event', 'share_linkedin');
