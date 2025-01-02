@@ -856,6 +856,7 @@ footer {
     bottom: 50px;
     left: 20px;
     z-index: 1000;
+    transition: all 0.3s ease;
 }
 
 .tuner-button button {
@@ -2417,6 +2418,10 @@ html {
     
     .share-btn {
         bottom: 10px;
+        left: 10px;
+    }
+
+    .tuner-button{
         left: 10px;
     }
 }
