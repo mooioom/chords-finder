@@ -68,6 +68,38 @@ main {
     min-height: 0;
 }
 
+.modal {
+    z-index: 2000 !important;
+}
+
+.modal-backdrop {
+    z-index: 1999 !important;
+}
+
+.next-chord-preview {
+    position: absolute;
+    right: 10px;
+    bottom: 9px;
+    font-size: 18px;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.next-chord-label {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.next-chord-value {
+    font-weight: 600;
+    color: #fff;
+}
+
 .chord-elements{
     height: 160px;
     flex-shrink: 0;

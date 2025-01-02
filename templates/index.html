@@ -1,14 +1,3 @@
-<style>
-/* Add these styles at the top of the file, after the extends line */
-.modal {
-    z-index: 2000 !important;
-}
-
-.modal-backdrop {
-    z-index: 1999 !important;
-}
-</style>
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -88,7 +77,11 @@
                         <div class="current-chord-value"></div>
                     </div>
                     <span class="current-time-value"></span>
+                    <div class="next-chord-preview">
+                        <div class="next-chord-value"></div>
+                    </div>
                 </div>
+                
             </div>
         </div>
         <!-- Chord Sequence -->
@@ -749,10 +742,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentIndex >= 0 && chordElements[currentIndex]) {
                 const element = chordElements[currentIndex];
                 
-                // Update text immediately - only show chord, not time
+                // Update current chord text
                 const markerChordText = element.querySelector('.chord-content').textContent.trim();
                 document.querySelector('.current-chord-value').textContent = markerChordText;
                 
+                // Update next chord text
+                const nextChordElement = chordElements[currentIndex + 1];
+                if (nextChordElement) {
+                    const nextChordText = nextChordElement.querySelector('.chord-content').textContent.trim();
+                    console.log(nextChordText)
+                    document.querySelector('.next-chord-value').textContent = `${nextChordText}`;
+                } else {
+                    document.querySelector('.next-chord-value').textContent = '';
+                }
+
                 // Update highlighted chord in the sequence
                 clearActiveChords();
                 element.classList.add('active');
