@@ -145,7 +145,7 @@ main {
 .chord-timeline {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
     margin-bottom: 20px;
     overflow-y: auto;
