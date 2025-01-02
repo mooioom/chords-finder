@@ -102,6 +102,7 @@ def youtube_search():
         'quiet': True,
         'no_warnings': True,
         'extract_flat': True,
+        'match_filter': lambda info: None if float(info.get('duration', 0)) > 18 * 60 else info,  # Filter videos longer than 18 minutes
         'default_search': 'ytsearch5'  # Limit to 5 results
     }
 
@@ -111,7 +112,7 @@ def youtube_search():
             
             items = []
             for entry in results['entries']:
-                if entry:
+                if entry and float(entry.get('duration', 0)) <= 18 * 60:  # Double check duration
                     # Get the best quality thumbnail
                     thumbnail = None
                     if 'thumbnails' in entry:
