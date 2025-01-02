@@ -1595,7 +1595,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     copyUrlBtn.addEventListener('click', async () => {
         try {
-            await navigator.clipboard.writeText(shareUrlInput.value);
+            // Try modern clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(shareUrlInput.value);
+            } else {
+                // Fallback: Select and copy using execCommand
+                shareUrlInput.select();
+                document.execCommand('copy');
+            }
+            
             copyUrlBtn.classList.add('copied');
             copyUrlBtn.innerHTML = '<i class="fas fa-check"></i>';
             
@@ -1608,6 +1616,8 @@ document.addEventListener('DOMContentLoaded', function() {
             gtag('event', 'share_copy_link');
         } catch (err) {
             console.error('Failed to copy text: ', err);
+            // Fallback: Show the text to copy
+            alert('Please copy this URL: ' + shareUrlInput.value);
         }
     });
 
@@ -1625,17 +1635,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
                 gtag('event', 'share_facebook');
             } else if (btn.classList.contains('instagram')) {
-                // Instagram doesn't support direct sharing via URL, copy to clipboard instead
-                navigator.clipboard.writeText(`${decodeURIComponent(text)} ${decodeURIComponent(url)}`);
-                alert('Text copied! Open Instagram and paste to share.');
+                // Use Instagram deep link
+                shareUrl = `instagram://share?text=${text}%20${url}`;
                 gtag('event', 'share_instagram');
-                return;
+                
+                // Fallback to Instagram website if app deep link fails
+                setTimeout(() => {
+                    window.location.href = 'https://instagram.com';
+                }, 2500);
             } else if (btn.classList.contains('tiktok')) {
-                // TikTok doesn't support direct sharing via URL, copy to clipboard instead
-                navigator.clipboard.writeText(`${decodeURIComponent(text)} ${decodeURIComponent(url)}`);
-                alert('Text copied! Open TikTok and paste to share.');
+                // Use TikTok deep link
+                shareUrl = `tiktok://share?text=${text}%20${url}`;
                 gtag('event', 'share_tiktok');
-                return;
+                
+                // Fallback to TikTok website if app deep link fails
+                setTimeout(() => {
+                    window.location.href = 'https://www.tiktok.com';
+                }, 2500);
             } else if (btn.classList.contains('linkedin')) {
                 shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
                 gtag('event', 'share_linkedin');
