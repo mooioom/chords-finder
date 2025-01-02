@@ -504,12 +504,12 @@ wave::-webkit-scrollbar-thumb:hover {
 
 #upload-form{
     overflow: hidden;
-    max-height: 100%;
+    height: 100%;
     transition: all 0.3s ease;
 }
 
 .results-loaded #upload-form{
-    max-height: 0%;
+    height: 0px;
 }
 
 .results-loaded .upload-section{
