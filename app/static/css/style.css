@@ -64,7 +64,17 @@ main {
 }
 
 #chord-sequence{
-    height: 50%;
+    flex: 1;
+    min-height: 0;
+}
+
+.chord-elements{
+    height: 160px;
+    flex-shrink: 0;
+}
+
+.chord-elements #current-chord-display{
+    height: 100%;
 }
 
 .main-title {
@@ -230,10 +240,9 @@ main {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 30px 50px;
     background: rgba(255, 255, 255, 0.08);
     width: 14em;
-    height: 11em;
+    height: 100%;
     backdrop-filter: blur(10px);
     border: 13px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
