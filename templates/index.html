@@ -1,8 +1,19 @@
+<style>
+/* Add these styles at the top of the file, after the extends line */
+.modal {
+    z-index: 2000 !important;
+}
+
+.modal-backdrop {
+    z-index: 1999 !important;
+}
+</style>
+
 {% extends "base.html" %}
 
 {% block content %}
 <div class="container text-center">
-    <h1 class="main-title mb-4">Eldi's Simple Chords Finder 🎸</h1>
+    <div class="main-title mb-4">ANYSONG.<b>AI</b></div>
     
     <div class="upload-section mb-4">
         <!-- Upload Form -->
@@ -11,22 +22,26 @@
                 <input type="file" class="file-input" id="file-upload" accept=".mp3">
                 <div class="upload-content">
                     <i class="fas fa-music upload-icon"></i>
-                    <p class="upload-text">Drop your MP3 here or click to browse</p>
+                    <p class="upload-text">Drop your Audio here</p>
                     <p class="upload-hint">Drag and drop or click to select</p>
                 </div>
             </div>
             <button type="button" id="analyze-btn" class="btn btn-primary" style="display: none;" disabled>
                 <i class="fas fa-wand-magic-sparkles me-2"></i>Analyze
             </button>
+            <p class="text-muted">- Or -</p>
         </div>
 
         <!-- YouTube Search -->
-        <div class="text-center mt-4">
-            <p class="text-muted">- or search on YouTube -</p>
+        <div class="text-center">
+            
             <div class="youtube-search-container">
                 <div class="youtube-search-input-wrapper">
                     <i class="fab fa-youtube youtube-search-icon"></i>
-                    <input type="text" id="youtube-search" class="form-control" placeholder="Search YouTube...">
+                    <input type="text" id="youtube-search" class="form-control" placeholder="Start with a song on YouTube...">
+                    <div class="youtube-search-hint">
+                        <p class="text-muted">Singer-Songwriter Tip: Try karaoke tracks for sing-alongs!</p>
+                    </div>
                 </div>
                 <div id="youtube-results" class="youtube-results">
                     <!-- Results will be populated here -->
@@ -141,6 +156,71 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Add modal injection at the start
+    const modalHTML = `
+        <div id="chordSelectModal" class="modal fade" tabindex="-1" style="z-index: 2000;">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title">Edit Chord</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="chordRoot" class="form-label">Root Note</label>
+                                <select id="chordRoot" class="form-select bg-dark text-white">
+                                    <option value="C">C</option>
+                                    <option value="C#">C#</option>
+                                    <option value="D">D</option>
+                                    <option value="D#">D#</option>
+                                    <option value="E">E</option>
+                                    <option value="F">F</option>
+                                    <option value="F#">F#</option>
+                                    <option value="G">G</option>
+                                    <option value="G#">G#</option>
+                                    <option value="A">A</option>
+                                    <option value="A#">A#</option>
+                                    <option value="B">B</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="chordType" class="form-label">Chord Type</label>
+                                <select id="chordType" class="form-select bg-dark text-white">
+                                    <option value="maj">Major</option>
+                                    <option value="min">Minor</option>
+                                    <option value="7">7</option>
+                                    <option value="maj7">Major 7</option>
+                                    <option value="min7">Minor 7</option>
+                                    <option value="dim">Diminished</option>
+                                    <option value="dim7">Diminished 7</option>
+                                    <option value="hdim7">Half Diminished 7</option>
+                                    <option value="aug">Augmented</option>
+                                    <option value="sus4">Sus4</option>
+                                    <option value="sus2">Sus2</option>
+                                    <option value="6">6</option>
+                                    <option value="m6">Minor 6</option>
+                                    <option value="9">9</option>
+                                    <option value="maj9">Major 9</option>
+                                    <option value="m9">Minor 9</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveChordBtn">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Create modal element and inject it into body
+    const modalElement = document.createElement('div');
+    modalElement.innerHTML = modalHTML;
+    document.body.appendChild(modalElement.firstElementChild);
+
     const uploadSection = document.querySelector('.upload-section');
     const uploadForm = document.getElementById('upload-form');
     const analyzeBtn = document.getElementById('analyze-btn');
@@ -242,6 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add new event listeners
         newPitchDownBtn.addEventListener('click', () => {
+            if (currentPitch <= -12) return; // Prevent going below -12
             currentPitch = Math.max(currentPitch - 1, -12);
             updatePitch();
             updatePitchValue();
@@ -250,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         newPitchUpBtn.addEventListener('click', () => {
+            if (currentPitch >= 12) return; // Prevent going above 12
             currentPitch = Math.min(currentPitch + 1, 12);
             updatePitch();
             updatePitchValue();
@@ -285,12 +367,20 @@ document.addEventListener('DOMContentLoaded', function() {
         playBtn.innerHTML = '<i class="fas fa-pause"></i>';
         currentChordBox.classList.add('playing');
         requestAnimationFrame(analyzeAudio);
+        // Send GA event for play
+        gtag('event', 'song_play', {
+            'song_title': document.querySelector('.file-info-display')?.textContent || 'Unknown'
+        });
     });
 
     // Add pause event handler
     wavesurfer.on('pause', function() {
         playBtn.innerHTML = '<i class="fas fa-play"></i>';
         currentChordBox.classList.remove('playing');
+        // Send GA event for pause
+        gtag('event', 'song_pause', {
+            'song_title': document.querySelector('.file-info-display')?.textContent || 'Unknown'
+        });
     });
 
     // Add error event handler
@@ -438,34 +528,38 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('file', file);
         
         try {
-            const response = await fetch('/upload', {
+            const response = await fetch('/process', {
                 method: 'POST',
                 body: formData
             });
-            
             const data = await response.json();
             
-            if (!response.ok) {
-                throw new Error(data.error || 'Upload failed');
+            if (data.error) {
+                // Send GA event for file processing error
+                gtag('event', 'file_process_error', {
+                    'file_name': file.name,
+                    'error': data.error
+                });
+                throw new Error(data.error);
             }
             
-            // Hide loader and show results
-            loader.classList.add('d-none');
-            resultsContainer.classList.remove('d-none');
+            // Send GA event for successful file processing
+            gtag('event', 'file_process_success', {
+                'file_name': file.name
+            });
             
-            // Parse and display chord sequence
-            chordSequence = data.chord_sequence;
-            
-            // Load the new audio file
-            wavesurfer.loadBlob(file);
-            displayResults(data.chord_sequence, file);
-            
+            displayResults(data, file);
         } catch (error) {
+            // Send GA event for file processing error
+            gtag('event', 'file_process_error', {
+                'file_name': file.name,
+                'error': error.message
+            });
+            console.error('Error:', error);
             errorMessage.textContent = error.message;
             errorMessage.classList.remove('d-none');
-            uploadSection.style.display = 'block';  // Show upload section on error
-        } finally {
             loader.classList.add('d-none');
+            uploadSection.style.display = 'block';
         }
     });
 
@@ -479,6 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadText.textContent = 'Drop your MP3 here or click to browse';
         uploadHint.textContent = 'Drag and drop or click to select';
         uploadArea.classList.remove('success', 'error');
+        document.body.classList.remove('play-mode');
         
         // Reset YouTube search
         youtubeSearch.value = '';
@@ -558,6 +653,81 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add after existing variables
     const TRANSITION_DURATION = 300; // matches CSS transition duration in ms
 
+    let lastManualScrollTime = 0;
+    const SCROLL_DEBOUNCE_TIME = 5000; // 5 seconds in milliseconds
+
+    // Add after existing variables
+    let PREVENT_AUTO_SCROLLING = false;
+    let scrollTimer = null;
+
+    function displayChordSequence(chords) {
+        const timeline = document.querySelector('.chord-timeline');
+        timeline.innerHTML = '';
+        
+        // Add scroll event listener to timeline
+        timeline.addEventListener('scroll', function() {
+            PREVENT_AUTO_SCROLLING = true;
+            
+            // Clear any existing timer
+            if (scrollTimer) {
+                clearTimeout(scrollTimer);
+            }
+            
+            // Set new timer
+            scrollTimer = setTimeout(() => {
+                PREVENT_AUTO_SCROLLING = false;
+            }, SCROLL_DEBOUNCE_TIME);
+        }, { passive: true });
+        
+        if (!chords || chords.length === 0) return;
+        
+        // Calculate min and max durations for scaling
+        const durations = chords.map(item => {
+            const chordData = parseChordData(item.chord);
+            return chordData ? chordData.endTime - chordData.startTime : 0;
+        });
+        const minDuration = Math.min(...durations.filter(d => d > 0));
+        const maxDuration = Math.max(...durations);
+
+        chords.forEach((item, index) => {
+            const marker = document.createElement('div');
+            marker.className = 'chord-marker';
+            const chordData = parseChordData(item.chord);
+            
+            if (chordData) {
+                const duration = chordData.endTime - chordData.startTime;
+                const baseWidth = 80;
+                const maxWidth = 200;
+                const widthRange = maxWidth - baseWidth;
+                
+                const normalizedWidth = baseWidth + (widthRange * (duration - minDuration) / (maxDuration - minDuration));
+                marker.style.setProperty('--chord-width', `${normalizedWidth}px`);
+                
+                // Check for custom chord
+                const customChord = customChords.get(index);
+                let displayChord = chordData.root === 'N' ? '🎵' : 
+                    customChord ? 
+                        `${customChord.root}${formatChordType(customChord.type)}` : 
+                        `${chordData.root}${formatChordType(chordData.type)}`;
+                
+                const chordContent = document.createElement('div');
+                chordContent.className = 'chord-content';
+                chordContent.textContent = displayChord;
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'chord-progress';
+                
+                marker.appendChild(chordContent);
+                marker.appendChild(progressBar);
+                
+                // Setup long press and click events
+                setupChordMarkerEvents(marker, chordData, index);
+            }
+            
+            timeline.appendChild(marker);
+        });
+    }
+
     function updateCurrentChord(currentTime) {
         const currentChord = findCurrentChord(currentTime);
         if (!currentChord) return;
@@ -583,20 +753,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearActiveChords();
                 element.classList.add('active');
                 
-                // Scroll the active chord into view with a small offset
-                const timeline = document.querySelector('.chord-timeline');
-                const elementTop = element.offsetTop;
-                const timelineHeight = timeline.clientHeight;
-                const scrollPosition = elementTop - (timelineHeight / 2) + (element.clientHeight / 2);
+                // Only auto-scroll if not prevented
+                if (!PREVENT_AUTO_SCROLLING) {
+                    const timeline = document.querySelector('.chord-timeline');
+                    const elementTop = element.offsetTop;
+                    const timelineHeight = timeline.clientHeight;
+                    const scrollPosition = elementTop - (timelineHeight / 2) + (element.clientHeight / 2);
+                    
+                    timeline.scrollTo({
+                        top: scrollPosition,
+                        behavior: 'smooth'
+                    });
+                }
+
+                // Send GA events for first and last chord markers
+                if (currentIndex === 0 && lastChordIndex !== 0) {
+                    gtag('event', 'first_chord_active', {
+                        'song_title': document.querySelector('.file-info-display')?.textContent || 'Unknown'
+                    });
+                }
                 
-                timeline.scrollTo({
-                    top: scrollPosition,
-                    behavior: 'smooth'
-                });
+                if (currentIndex === chordSequence.length - 1 && lastChordIndex !== chordSequence.length - 1) {
+                    gtag('event', 'last_chord_active', {
+                        'song_title': document.querySelector('.file-info-display')?.textContent || 'Unknown'
+                    });
+                }
             }
-            
-            lastChordIndex = currentIndex;
         }
+
+        lastChordIndex = currentIndex;
 
         // Update progress bar for current chord
         if (currentIndex >= 0) {
@@ -634,6 +819,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentFileName = '';
 
     function displayResults(chords, file) {
+        document.body.classList.remove('results-loaded');
+        document.body.classList.add('play-mode');
         // Store chord sequence globally but don't display yet
         chordSequence = chords;
         
@@ -661,63 +848,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset states
         resetPlaybackStates();
-    }
-
-    function displayChordSequence(chords) {
-        const timeline = document.querySelector('.chord-timeline');
-        timeline.innerHTML = '';
-        
-        if (!chords || chords.length === 0) return;
-        
-        // Calculate min and max durations for scaling
-        const durations = chords.map(item => {
-            const chordData = parseChordData(item.chord);
-            return chordData ? chordData.endTime - chordData.startTime : 0;
-        });
-        const minDuration = Math.min(...durations.filter(d => d > 0));
-        const maxDuration = Math.max(...durations);
-
-        chords.forEach((item, index) => {
-            const marker = document.createElement('div');
-            marker.className = 'chord-marker';
-            const chordData = parseChordData(item.chord);
-            
-            if (chordData) {
-                const duration = chordData.endTime - chordData.startTime;
-                const baseWidth = 80;
-                const maxWidth = 200;
-                const widthRange = maxWidth - baseWidth;
-                
-                const normalizedWidth = baseWidth + (widthRange * (duration - minDuration) / (maxDuration - minDuration));
-                marker.style.setProperty('--chord-width', `${normalizedWidth}px`);
-                
-                let displayChord = chordData.root === 'N' ? '🎵' : 
-                    `${chordData.root}${formatChordType(chordData.type)}`;
-                
-                // Create chord content - removed time indicator
-                const chordContent = document.createElement('div');
-                chordContent.className = 'chord-content';
-                chordContent.textContent = displayChord;
-                
-                // Create progress bar
-                const progressBar = document.createElement('div');
-                progressBar.className = 'chord-progress';
-                
-                // Add elements to marker
-                marker.appendChild(chordContent);
-                marker.appendChild(progressBar);
-                
-                marker.addEventListener('click', () => {
-                    wavesurfer.play(chordData.startTime);
-                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                    currentChordBox.classList.add('playing');
-                    clearActiveChords();
-                    marker.classList.add('active');
-                });
-            }
-            
-            timeline.appendChild(marker);
-        });
     }
 
     function updateFileInfo(file) {
@@ -850,12 +980,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Add resize handler to update position
-    window.addEventListener('resize', () => {
-        if (currentTransposition !== 0) {
-            updateTransposeIndicator();
-        }
-    });
 
     function setupTransposeButtons() {
         const transposeDownBtn = document.querySelector('.transpose-down');
@@ -914,17 +1038,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function transposeChord(chord, semitones) {
         try {
-            // Extract root note and the rest of the chord
+            // Check if this is a custom chord
+            const chordIndex = lastChordIndex;
+            const customChord = customChords.get(chordIndex);
+            
+            if (customChord) {
+                // Use the custom chord's root for transposition
+                const noteIndex = notes.indexOf(customChord.root);
+                if (noteIndex === -1) return null;
+                
+                // Calculate new root note
+                let newIndex = noteIndex + semitones;
+                newIndex = ((newIndex % 12) + 12) % 12;
+                
+                return notes[newIndex] + formatChordType(customChord.type);
+            }
+            
+            // Original transposition logic for non-custom chords
             const match = chord.match(/^([A-G]#?)(.*)$/);
             if (!match) return null;
-
+            
             const [_, root, quality] = match;
             const noteIndex = notes.indexOf(root);
             if (noteIndex === -1) return null;
-
-            // Calculate new root note
+            
             let newIndex = noteIndex + semitones;
-            // Ensure the index wraps around properly
             newIndex = ((newIndex % 12) + 12) % 12;
             
             return notes[newIndex] + quality;
@@ -1140,10 +1278,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (query.length < 3) {
             youtubeResults.innerHTML = '';
+            document.body.classList.remove('results-loaded');
             return;
         }
 
         searchTimeout = setTimeout(() => {
+            // Send GA event for YouTube search
+            gtag('event', 'youtube_search', {
+                'search_text': query
+            });
             searchYoutube(query);
         }, 500);
     });
@@ -1158,6 +1301,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/youtube/search?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
+                document.body.classList.add('results-loaded');
                 youtubeResults.innerHTML = '';
                 if (data.items && data.items.length > 0) {
                     data.items.forEach(video => {
@@ -1215,7 +1359,15 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        div.addEventListener('click', () => processYoutubeVideo(video.id));
+        div.addEventListener('click', () => {
+            // Send GA event for YouTube video click
+            gtag('event', 'youtube_video_click', {
+                'video_title': video.title,
+                'video_url': `https://youtube.com/watch?v=${video.id}`,
+                'video_duration': duration
+            });
+            processYoutubeVideo(video.id);
+        });
         return div;
     }
 
@@ -1242,9 +1394,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            
             if (data.error) {
                 throw new Error(data.error);
             }
+            
+            // Send GA event for successful YouTube processing
+            gtag('event', 'youtube_process_success', {
+                'video_title': data.title || 'Unknown'
+            });
             
             // Create a file-like object for displayResults
             const fileInfo = {
@@ -1291,6 +1449,130 @@ document.addEventListener('DOMContentLoaded', function() {
             loader.classList.add('d-none');
         });
     }
+
+    // Add after the existing variables
+    let customChords = new Map(); // Store custom chord modifications
+    let longPressTimer;
+    let currentEditingMarker = null;
+    const LONG_PRESS_DURATION = 500; // 500ms for long press
+
+    function setupChordMarkerEvents(marker, chordData, index) {
+        let pressTimer;
+        let startTime;
+        
+        marker.addEventListener('mousedown', (e) => {
+            startTime = Date.now();
+            pressTimer = setTimeout(() => {
+                showChordSelectModal(marker, chordData, index);
+            }, LONG_PRESS_DURATION);
+        });
+        
+        marker.addEventListener('mouseup', (e) => {
+            const pressDuration = Date.now() - startTime;
+            clearTimeout(pressTimer);
+            
+            // Only trigger click event if it wasn't a long press
+            if (pressDuration < LONG_PRESS_DURATION) {
+                // Send GA event for chord marker click
+                gtag('event', 'chord_marker_click', {
+                    'chord': chordData.root + formatChordType(chordData.type),
+                    'time': chordData.startTime
+                });
+                wavesurfer.play(chordData.startTime);
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                currentChordBox.classList.add('playing');
+                clearActiveChords();
+                marker.classList.add('active');
+            }
+        });
+        
+        marker.addEventListener('mouseleave', () => {
+            clearTimeout(pressTimer);
+        });
+        
+        // Touch events for mobile
+        marker.addEventListener('touchstart', (e) => {
+            startTime = Date.now();
+            pressTimer = setTimeout(() => {
+                showChordSelectModal(marker, chordData, index);
+            }, LONG_PRESS_DURATION);
+        });
+        
+        marker.addEventListener('touchend', (e) => {
+            const pressDuration = Date.now() - startTime;
+            clearTimeout(pressTimer);
+            
+            if (pressDuration < LONG_PRESS_DURATION) {
+                // Send GA event for chord marker click
+                gtag('event', 'chord_marker_click', {
+                    'chord': chordData.root + formatChordType(chordData.type),
+                    'time': chordData.startTime
+                });
+                wavesurfer.play(chordData.startTime);
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                currentChordBox.classList.add('playing');
+                clearActiveChords();
+                marker.classList.add('active');
+            }
+        });
+    }
+
+    function showChordSelectModal(marker, chordData, index) {
+        currentEditingMarker = { marker, chordData, index };
+        
+        // Get current chord values
+        const currentChord = customChords.get(index) || {
+            root: chordData.root,
+            type: chordData.type || 'maj'
+        };
+        
+        // Set the select values
+        document.getElementById('chordRoot').value = currentChord.root;
+        document.getElementById('chordType').value = currentChord.type;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('chordSelectModal'));
+        modal.show();
+    }
+
+    // Add save button event listener
+    document.getElementById('saveChordBtn').addEventListener('click', () => {
+        if (!currentEditingMarker) return;
+        
+        const newRoot = document.getElementById('chordRoot').value;
+        const newType = document.getElementById('chordType').value;
+        
+        // Store the custom chord
+        customChords.set(currentEditingMarker.index, {
+            root: newRoot,
+            type: newType,
+            originalRoot: currentEditingMarker.chordData.root,
+            originalType: currentEditingMarker.chordData.type
+        });
+        
+        // Update the display
+        const displayChord = `${newRoot}${formatChordType(newType)}`;
+        currentEditingMarker.marker.querySelector('.chord-content').textContent = displayChord;
+        
+        // If this is the current chord, update the current chord display
+        if (currentEditingMarker.marker.classList.contains('active')) {
+            document.querySelector('.current-chord-value').textContent = displayChord;
+        }
+        
+        // Close the modal
+        bootstrap.Modal.getInstance(document.getElementById('chordSelectModal')).hide();
+        currentEditingMarker = null;
+    });
+
+    // Add event listener for main title
+    document.querySelector('.main-title').addEventListener('click', () => {
+        gtag('event', 'title_click');
+    });
+
+    // Add event listener for donate button
+    document.querySelector('footer a[href*="paypal"]').addEventListener('click', () => {
+        gtag('event', 'donate_click');
+    });
 });
 </script>
 {% endblock %} 

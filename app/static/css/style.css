@@ -54,15 +54,30 @@ main {
 .main-title {
     font-family: 'Outfit', sans-serif;
     font-weight: 100;
-    font-size: 14px;
+    font-size: 28px;
     color: #fff;
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     animation: glow 2s ease-in-out infinite alternate;
     letter-spacing: -0.5px;
     position: fixed;
     z-index: 1;
-    top: 10px;
-    left: 10px;
+    top: 30px;
+    left: 30px;
+    transition: all 0.2s ease-in-out;
+}
+
+.main-title span{
+    display: block;
+    font-size: 12px;
+    letter-spacing: 1.2;
+    font-weight: normal;
+    opacity: 0.3;
+    text-align: start;
+    margin-top: -5px;
+}
+
+.main-title b{
+    font-weight: 100;
 }
 
 .chord-timeline {
@@ -422,11 +437,26 @@ wave::-webkit-scrollbar-thumb:hover {
 .upload-section {
     max-width: 500px;
     margin: 0 auto;
-    padding: 25px;
+    padding: 18px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
     text-align: center;
     margin-top: 120px;
+    transition: all 0.7s ease;
+}
+
+#upload-form{
+    overflow: hidden;
+    max-height: 100%;
+    transition: all 0.3s ease;
+}
+
+.results-loaded #upload-form{
+    max-height: 0%;
+}
+
+.results-loaded .upload-section{
+    margin-top: 80px;
 }
 
 .upload-area {
@@ -961,15 +991,15 @@ footer {
     margin: 0 auto;
 }
 
-.youtube-search-input-wrapper {
-    position: relative;
-    margin-bottom: 20px;
+.youtube-search-hint{
+    font-size: 11px;
+    margin-top: 3px;
 }
 
 .youtube-search-icon {
     position: absolute;
-    left: 15px;
-    top: 50%;
+    left: 13px;
+    top: 26px;
     transform: translateY(-50%);
     color: #ff0000;
     font-size: 20px;
@@ -982,7 +1012,7 @@ footer {
     color: white;
     border-radius: 12px;
     padding: 12px 20px 12px 45px;
-    font-size: 16px;
+    font-size: 18px;
     backdrop-filter: blur(5px);
     transition: all 0.3s ease;
 }
@@ -1100,6 +1130,17 @@ footer {
 
 /* Mobile styles for YouTube results */
 @media (max-width: 576px) {
+
+    .play-mode .main-title{
+        font-size: 18px;
+        top: 10px;
+        left: 10px;
+    }
+    
+    .play-mode .main-title span{
+        opacity: 0;
+    }
+
     .youtube-result {
         flex-direction: column;
         align-items: stretch;
@@ -1224,26 +1265,6 @@ html {
 
     .upload-area .upload-content {
         display: none;
-    }
-
-    .upload-area::after {
-        content: '\f093  Select audio file';
-        font-family: 'Font Awesome 5 Free', 'Outfit', sans-serif;
-        font-weight: 900;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        width: 100%;
-        padding: 15px 20px;
-        font-size: 1.2em;
-        color: white;
-        background: linear-gradient(135deg, rgba(0, 123, 255, 0.2), rgba(0, 123, 255, 0.3));
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 15px;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     .upload-area:hover::after {
@@ -1412,16 +1433,6 @@ wave::-webkit-scrollbar-thumb:hover {
     transform: translateY(-2px);
     background: rgba(0, 123, 255, 0.4);
     border: 1px solid rgba(0, 0, 0, 1) !important;
-}
-
-.upload-section {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 25px;
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    text-align: center;
-    margin-top: 120px;
 }
 
 .upload-area {
@@ -1938,46 +1949,9 @@ footer {
     opacity: 0.6;
 }
 
-/* YouTube Search Styles */
-.youtube-search-container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
 .youtube-search-input-wrapper {
     position: relative;
     margin-bottom: 20px;
-}
-
-.youtube-search-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #ff0000;
-    font-size: 20px;
-    z-index: 2;
-}
-
-#youtube-search {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    border-radius: 12px;
-    padding: 12px 20px 12px 45px;
-    font-size: 16px;
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
-}
-
-#youtube-search:focus {
-    background: rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 15px rgba(0, 123, 255, 0.2);
-}
-
-#youtube-search::placeholder {
-    color: rgba(255, 255, 255, 0.6);
 }
 
 .youtube-results {
@@ -2070,16 +2044,6 @@ footer {
     letter-spacing: 0.3px;
 }
 
-.youtube-info {
-    flex: 1;
-}
-
-.youtube-title {
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: #fff;
-    font-size: 1.1em;
-}
 
 /* Mobile styles for YouTube results */
 @media (max-width: 576px) {
@@ -2210,16 +2174,15 @@ html {
     }
 
     .upload-area::after {
-        content: '\f093  Select audio file';
-        font-family: 'Font Awesome 5 Free', 'Outfit', sans-serif;
-        font-weight: 900;
+        content: 'Upload Audio';
+        font-family: 'Outfit', sans-serif;
+        font-weight: normal;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
         width: 100%;
         padding: 15px 20px;
-        font-size: 1.2em;
+        font-size: 18px;
         color: white;
         background: linear-gradient(135deg, rgba(0, 123, 255, 0.2), rgba(0, 123, 255, 0.3));
         border: 1px solid rgba(255, 255, 255, 0.2);
