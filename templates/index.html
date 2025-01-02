@@ -66,7 +66,7 @@
                 <i class="fas fa-play"></i>
             </button>
             <button id="uploadMoreBtn" class="btn btn-outline-light btn-lg">
-                <i class="fas fa-upload"></i>
+                <i class="fas fa-bolt"></i>
             </button>
         </div>
 
@@ -961,10 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add the transposition indicator HTML
     const transposeIndicator = document.createElement('div');
     transposeIndicator.className = 'transpose-indicator';
-    transposeIndicator.innerHTML = `
-        <span class="transpose-text">Transposed: <strong>0</strong> semitones</span>
-        <button class="reset-btn">Reset</button>
-    `;
+    transposeIndicator.innerHTML = ``;
     document.body.appendChild(transposeIndicator);
 
     function updateTransposeIndicator() {
