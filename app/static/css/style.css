@@ -145,7 +145,7 @@ main {
 .chord-timeline {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     justify-content: center;
     margin-bottom: 20px;
     overflow-y: auto;
@@ -159,11 +159,12 @@ main {
 
 .chord-marker {
     background: rgba(0, 0, 0, 0.2);
-    color: #fff;
-    padding: 12px 0px; 
+    transform-origin: center;
+    color: #ffffff8a;
+    padding: 10px 0px;
     border-radius: 10px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    /* border-top-left-radius: 10px; */
+    /* border-top-right-radius: 10px; */
     font-size: 2.3em;
     font-weight: 600;
     min-width: 80px;
@@ -226,8 +227,9 @@ main {
 
 .chord-marker.active {
     background: rgba(0, 123, 255, 0.3) !important;
-    transform: scale(1.15);
-    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+    transform-origin: center;
+    border-color: rgba(9, 104, 236, 0.4);
     /* animation: markerPulse 2s infinite; */
     color: #fff;
     text-shadow: 
@@ -238,6 +240,7 @@ main {
         0 0 30px rgba(0, 123, 255, 0.4),
         inset 0 0 20px rgba(0, 123, 255, 0.2);
     z-index: 10;
+    /* border-radius: 10px; */
 }
 
 @keyframes markerPulse {
