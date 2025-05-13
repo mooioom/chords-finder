@@ -1,6 +1,6 @@
-# Eldi's Simple Chords Finder 🎵
+# Anysong.ai 🎵
 
-A beautiful and intuitive web application that analyzes MP3 files to detect and display chord progressions in real-time. The app features a modern, responsive design with an animated musical note background and a sleek dark theme interface.
+AI harmonies extraction using Madmom, Librosa, Numpy (Python, flask) application that analyzes MP3 files to detect and display chord progressions in real-time. The app features a modern, responsive design with an animated musical note background and a sleek dark theme interface.
 
 ## Features ✨
 
